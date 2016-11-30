@@ -7,7 +7,7 @@
 			try {
 				$this->db = new DatabaseConnection(DB_HOST, DB_USER, DB_PASS, EntityTypeTestTable);
 			} catch(Exception $e) {
-				$this->fail($e->getMessage());
+				$this->fail("Unable to setup tests, perhaps you forgot to configure database credentials.");
 			}
 		}
 
@@ -51,8 +51,8 @@
 			$entity->save();
 			
 			$testId = db()->fetchField("test_table", "test_id", ["varchar_col" => "somevalue"]);
-			$entity = EntityType::load($testId);
 
+			$entity = EntityType::load($testId);
 			$this->assertInstanceOf("EntityType", $entity);
 		}
 
@@ -63,7 +63,7 @@
 		public function testInsertAndLoadEntity() {
 			$staticValue = "not_changed";
 
-			$varcharColValue = "Danes are wierd æøå!#<";
+			$varcharColValue = "Danes are --' wierd æøå!#<";
 			$textColValue = "At this point I should really start considering going to bed.. it's way past 22:00";
 
 			$integrity = md5($staticValue.$varcharColValue.$textColValue);
@@ -97,5 +97,21 @@
 
 			$entities = EntityType::load($ids);
 			$this->assertEquals(count($entities), $numberItems);
+		}
+
+		/**
+		* Inserts an entity and make sure it can be deleted.
+		* Hopefully this should only delete a single row
+		* @author Allan Thue Rehhoff
+		*/
+		public function testInsertAndDelete() {
+			$insert = new EntityType();
+			$insert->set(["varchar_col" => "Lorem ipsum dolor sit amet"])->save();
+			$insert_id = $insert->id();
+
+			$loaded = EntityType::load($insert_id);
+			$this->assertNotEmpty($loaded);
+
+			$this->assertEquals(1, $loaded->delete());
 		}
 	}

@@ -3,7 +3,7 @@
 	* Represents a connection between the server and the database.
 	* Easily perform SQL queries without writing (more than neccesary) SQL.
 	* @author Allan Thue Rehhoff
-	* @version 1.3
+	* @version 2.0
 	*/
 	class DatabaseConnection {
 		private $_connection, $transactionStarted;
@@ -215,6 +215,7 @@
 		* @param (string) $table Name of the table to replace into
 		* @param (array) $variables Column => Value pairs to be inserted
 		* @return (string) The last inserted ID
+		* @since 1.0
 		*/
 		public function replace($table, $variables) {
 			return $this->createRow("REPLACE", $table, $variables)->rowCount();

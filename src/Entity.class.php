@@ -6,16 +6,16 @@
 		abstract protected function getTableName();
 
 		public function __construct($data = null) {
-			if ($data !== null && gettype($data) != "object") {
-				$data = DatabaseConnection::getInstance()->fetchRow($this->getTableName(), [$this->getKeyField() => $data]);
+			if ($data !== null && gettype($data) != "array") {
+				$data = (array) DatabaseConnection::getInstance()->fetchRow($this->getTableName(), [$this->getKeyField() => $data]);
 			}
 
 			if ($data !== null) {
 				$key = $this->getKeyField();
-				$this->key = $data->{$key};
-				unset( $data->{$key} );
+				$this->key = $data[$key];
+				unset( $data[$key]);
 			} else {
-				$data = (object) [];
+				$data = [];
 			}
 
 			$this->data = $data;
@@ -30,11 +30,11 @@
 		}
 
 		public function __set($name, $value) {
-			$this->data->{$name} = $value;
+			$this->data[$name] = $value;
 		}
 
 		public function __get($name) {
-			return $this->data->{$name};
+			return $this->data[$name];
 		}
 
 		public function save() {
@@ -52,13 +52,16 @@
 		}
 		
 		public function delete() {
-			DatabaseConnection::getInstance()->delete($this->getTableName(), $this->getKeyFilter());		
+			return DatabaseConnection::getInstance()->delete($this->getTableName(), $this->getKeyFilter());		
 		}
 		
 		public function safe($key) {
 			return htmlspecialchars($this->data[$key], ENT_QUOTES, "UTF-8");
 		}
 
+		/**
+		* @todo Take this out of a static context
+		*/
 		public static function load($ids) {
 			$class = get_called_class();
 			$obj = new $class();
@@ -81,6 +84,7 @@
 				$values = array_intersect_key($values, array_flip($allowed_fields));
 			}
 			$this->data = array_merge($this->data, $values);
+			return $this;
 		}
 
 		public function getData() {

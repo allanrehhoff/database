@@ -1,10 +1,10 @@
 <?php
 	/**
 	* Quickly test most frequent use cases for the DatabaseConnection() class
-	* @author Allan Thue Rehhoff
 	* @todo Add the following queries to be tested against.
-	* ALTER TABLE  `movies` ADD  `test_col` INT NOT NULL AFTER  `completed` ;
+	* ALTER TABLE  `movies` ADD  `test_col` INT NOT NULL AFTER  `completed`;
 	* ALTER TABLE `movies` DROP `test_col`
+	* @author Allan Thue Rehhoff
 	*/
 	class DatabaseConnectionTest extends PHPUnit_Framework_TestCase {
 		private $db;

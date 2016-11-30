@@ -22,3 +22,5 @@ Simply copy the EntityType class to a new file and rename it accordingly.
 	}
 ?> 
 ```
+
+This tool is licensed under [ WTFPL ](http://www.wtfpl.net/)
