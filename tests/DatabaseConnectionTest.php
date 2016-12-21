@@ -17,7 +17,7 @@
 		*/
 		public function setUp() {
 			try {
-				$this->db = new DatabaseConnection(DB_HOST, DB_USER, DB_PASS, DatabaseConnectionTestTable);
+				$this->db = new \Database\Connection(DB_HOST, DB_USER, DB_PASS, DatabaseConnectionTestTable);
 			} catch(Exception $e) {
 				$this->fail($e->getMessage());
 			}
@@ -45,15 +45,15 @@
 		* @author Allan Thue Rehhoff
 		*/
 		public function testSingletonIsInstanceOfDatabaseConnection() {
-			$this->assertInstanceOf("DatabaseConnection", DatabaseConnection::getInstance());
+			$this->assertInstanceOf("Database\Connection", Database\Connection::getInstance());
 		}
 
 		/**
 		* @author Allan Thue Rehhoff
 		*/
 		public function testSingletonCanDoQuery() {
-			$sdb = DatabaseConnection::getInstance();
-			$this->assertInstanceOf("DatabaseConnection", $sdb);
+			$sdb = Database\Connection::getInstance();
+			$this->assertInstanceOf("Database\Connection", $sdb);
 			$res = $sdb->query("SELECT mid FROM movies LIMIT 1")->fetchAll();
 			$this->assertInternalType("array", $res);
 		}

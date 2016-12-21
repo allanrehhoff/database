@@ -5,7 +5,7 @@
 	class EntityTypeTest extends PHPUnit_Framework_TestCase {
 		public function setUp() {
 			try {
-				$this->db = new DatabaseConnection(DB_HOST, DB_USER, DB_PASS, EntityTypeTestTable);
+				$this->db = new Database\Connection(DB_HOST, DB_USER, DB_PASS, EntityTypeTestTable);
 			} catch(Exception $e) {
 				$this->fail("Unable to setup tests, perhaps you forgot to configure database credentials.");
 			}
@@ -20,8 +20,8 @@
 		* @author Allan Thue Rehhoff
 		*/
 		public function testInstanceIsEntity() {
-			$entity = new EntityType();
-			$this->assertInstanceOf("EntityType", $entity);
+			$entity = new Database\EntityType();
+			$this->assertInstanceOf("Database\EntityType", $entity);
 		}
 
 		/**
@@ -29,7 +29,7 @@
 		* @author Allan Thue Rehhoff
 		*/
 		public function testGetLastInsertIdAfterInsertEntityType() {
-			$entity = new EntityType();
+			$entity = new Database\EntityType();
 			$entity->set( [
 				"datetime_col" => date("Y-m-d H:i:s"),
 				"varchar_col" => "Lorem ipsum dolor sit amet",
@@ -46,14 +46,14 @@
 		* @author Allan Thue Rehhoff
 		*/
 		public function testStaticLoadSingleEntity() {
-			$entity = new EntityType();
+			$entity = new Database\EntityType();
 			$entity->set(["varchar_col" => "somevalue", "text_col" => "Lorem ipsum dolor sit amet"]);
 			$entity->save();
 			
 			$testId = db()->fetchField("test_table", "test_id", ["varchar_col" => "somevalue"]);
 
-			$entity = EntityType::load($testId);
-			$this->assertInstanceOf("EntityType", $entity);
+			$entity = Database\EntityType::load($testId);
+			$this->assertInstanceOf("Database\EntityType", $entity);
 		}
 
 		/**
@@ -68,12 +68,12 @@
 
 			$integrity = md5($staticValue.$varcharColValue.$textColValue);
 
-			$entity = new EntityType();
+			$entity = new Database\EntityType();
 			$entity->set(["varchar_col" => $varcharColValue, "text_col" => $textColValue]);
 			$insert_id = $entity->save();
 
 			$this->assertEquals($insert_id, db()->lastInsertId());
-			$loadedEntity = new EntityType($insert_id);
+			$loadedEntity = new Database\EntityType($insert_id);
 
 			$this->assertNotEmpty($loadedEntity);
 
@@ -90,12 +90,12 @@
 			// Insert a bunch of test data
 			$numberItems =  mt_rand(1, 5);
 			for ($i=0; $i < $numberItems; $i++) { 
-				$entity = new EntityType();
+				$entity = new Database\EntityType();
 				$entity->set(["varchar_col" => "value".$i, "text_col" => "longvalue ".$i]);
 				$ids[] = $entity->save();
 			}
 
-			$entities = EntityType::load($ids);
+			$entities = Database\EntityType::load($ids);
 			$this->assertEquals(count($entities), $numberItems);
 		}
 
@@ -105,11 +105,11 @@
 		* @author Allan Thue Rehhoff
 		*/
 		public function testInsertAndDelete() {
-			$insert = new EntityType();
+			$insert = new Database\EntityType();
 			$insert->set(["varchar_col" => "Lorem ipsum dolor sit amet"])->save();
 			$insert_id = $insert->id();
 
-			$loaded = EntityType::load($insert_id);
+			$loaded = Database\EntityType::load($insert_id);
 			$this->assertNotEmpty($loaded);
 
 			$this->assertEquals(1, $loaded->delete());

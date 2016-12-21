@@ -1,4 +1,10 @@
 #Changelog#  
+v2.1  
+- Wrapped the entire library into a namespacing structure.  
+- Updated documentation.  
+- Updated tests to match the new structure.  
+- Added an autoloader file.  
+
 v2.0 *Backwards incompatible*
 - Added Entity and EntityType classes.  
 - Moved project to seperate repository.  

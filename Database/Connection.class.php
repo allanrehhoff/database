@@ -1,11 +1,15 @@
 <?php
-	/**
-	* Represents a connection between the server and the database.
-	* Easily perform SQL queries without writing (more than neccesary) SQL.
-	* @author Allan Thue Rehhoff
-	* @version 2.0
-	*/
-	class DatabaseConnection {
+/**
+* Represents a connection between the server and the database.
+* Easily perform SQL queries without writing (more than neccesary) SQL.
+* Credits to Mikkel Jensen & Victoria Hansen from whom I in cold blood have undeterred copied some of this code from.
+* @author Allan Thue Rehhoff
+* @version 2.0
+*/
+namespace Database {
+	use \PDO;
+
+	class Connection {
 		private $_connection, $transactionStarted;
 		private static $singletonInstance;
 		public $rowCount, $statement;
@@ -336,3 +340,4 @@
 			return $this->_connection->lastInsertId();
 		}
 	}
+}
