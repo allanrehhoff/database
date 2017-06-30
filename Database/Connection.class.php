@@ -174,7 +174,8 @@ namespace Database {
 		*/
 		public function fetchRow($table, $criteria = null) {
 			$sql = "SELECT * FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
-			return $this->query($sql, $criteria)->fetchAll()[0];
+			$row = $this->query($sql, $criteria)->fetchAll();
+			return !empty($row) ? $row[0] : [];
 		}
 
 		/**
@@ -188,7 +189,8 @@ namespace Database {
 		*/
 		public function fetchCell($table, $column, $criteria = null) {
 			$sql = "SELECT `".$column."` FROM ".$table." WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
-			return $this->query($sql, $criteria)->fetchAll()[0]->$column;
+			$row = $this->query($sql, $criteria)->fetchAll()[0]->$column;
+			return !empty($row) ? $row[0]->$column : false;
 		}
 
 		/**
