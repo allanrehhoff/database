@@ -41,7 +41,7 @@ namespace Database {
 		}
 
 		/**
-		* This should most likely close the connection when you're done using the DatabaseConnection
+		* This should most likely close the connection when you're done using the \Database\Connection
 		* @author Allan Thue Rehhoff
 		* @return void
 		* @since 1.3
@@ -54,7 +54,7 @@ namespace Database {
 		/**
 		* Allow methods not implemented by this class to be called on the connection
 		* @author Allan Thue Rehhoff
-		* @todo Consider removing the DatabaseConnection::getConnection(); method now that we have this.
+		* @todo Consider removing the \Database\Connection::getConnection(); method now that we have this.
 		* @since 1.3
 		*/
 		public function __call($method, $params = []) {
@@ -66,7 +66,7 @@ namespace Database {
 		} 
 
 		/**
-		* Retrieve the latest initiated DatabaseConnection instance.
+		* Retrieve the latest initiated \Database\Connection instance.
 		* @return (object)
 		* @author Allan Thue Rehhoff
 		* @since 1.0
@@ -76,7 +76,7 @@ namespace Database {
 		}
 
 		/**
-		* Retrieve the connection instance used by the current DatabaseConnection instance.
+		* Retrieve the connection instance used by the current \Database\Connection instance.
 		* You should rarely have a use for this though.
 		* @since 1.0
 		* @return (object)
@@ -194,8 +194,8 @@ namespace Database {
 		}
 
 		/**
-		* Alias of DatabaseConnection::fetchCell implemented for the drupal developers sake.
-		* @see DatabaseConnection::fetchCell();
+		* Alias of \Database\Connection::fetchCell implemented for the drupal developers sake.
+		* @see \Database\Connection::fetchCell();
 		*/
 		public function fetchField($table, $column, $criteria = null) {
 			return $this->fetchCell($table, $column, $criteria);
@@ -297,7 +297,7 @@ namespace Database {
 		}
 
 		/**
-		* Debugging prepared statements can be severely painful, use this as you would with DatabaseConnection::query(); to output the resulting SQL
+		* Debugging prepared statements can be severely painful, use this as you would with \Database\Connection::query(); to output the resulting SQL
 		* Replaces any parameter placeholders in a query with the corrosponding value that parameter.
 		* Assumes anonymous parameters from $params are are in the same order as specified in $query
 		* @param (string) $sql A parameterized SQL query
@@ -305,7 +305,7 @@ namespace Database {
 		* @return (string)
 		* @author Allan Thue Rehhoff
 		* @since 1.1
-		* @todo Support UPDATE statements as seen in DatabaseConnection::update();
+		* @todo Support UPDATE statements as seen in \Database\Connection::update();
 		*/
 		public function interpolateQuery($query, $params) {
 			$keys = [];
