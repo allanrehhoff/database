@@ -80,7 +80,7 @@ namespace Database {
 					$this->key = Connection::getInstance()->insert($this->getTableName(), $this->data);
 					return $this->key;
 				} else {
-					DatabaseConnection::getInstance()->update($this->getTableName(), $this->data, $this->getKeyFilter());
+					Connection::getInstance()->update($this->getTableName(), $this->data, $this->getKeyFilter());
 					return $this->data;
 				}
 			} catch(Exception $e) {
@@ -161,7 +161,7 @@ namespace Database {
 		* @author Allan Thue Rehhoff
 		*/
 		public function get($key) {
-			return $this->data[$key];
+			return isset($this->data[$key]) ? $this->data[$key] : false;
 		}
 
 		/**
