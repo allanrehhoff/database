@@ -1,4 +1,13 @@
 #Changelog#  
+v2.2
+- Fixed a bug in Connection::fetchCell(); that would make the function always return null.  
+- Updated documentation for Connection::query(); method.  
+- Enforce errors to be thrown as exceptions.  
+- Moving away from .class.php extensions, just use .php, for easier drop-ins to other projects.  
+- Only let the bundled autoloader care about it's own classes.  
+- Added a few properties for debugging, more to come.
+- Documented class properties.
+
 v2.1  
 - Wrapped the entire library into a namespacing structure.  
 - Updated documentation.  

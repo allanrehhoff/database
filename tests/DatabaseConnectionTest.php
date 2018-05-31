@@ -2,11 +2,9 @@
 	/**
 	* Quickly test most frequent use cases for the DatabaseConnection() class
 	* @todo Add the following queries to be tested against.
-	* ALTER TABLE  `movies` ADD  `test_col` INT NOT NULL AFTER  `completed`;
-	* ALTER TABLE `movies` DROP `test_col`
 	* @author Allan Thue Rehhoff
 	*/
-	class DatabaseConnectionTest extends PHPUnit_Framework_TestCase {
+	class DatabaseConnectionTest extends PHPUnit\Framework\TestCase {
 		private $db;
 		private $idsToDeleteInOurMovies = [];
 		private $initialAutoIncrementValue;
@@ -21,12 +19,6 @@
 			} catch(Exception $e) {
 				$this->fail($e->getMessage());
 			}
-
-			$this->initialAutoIncrementValue = $this->db->fetchCell(
-				"INFORMATION_SCHEMA.TABLES",
-				"AUTO_INCREMENT",
-				["TABLE_SCHEMA" => DatabaseConnectionTestTable, "TABLE_NAME" => "movies"]
-			);
 		}
 
 		/**
@@ -38,7 +30,7 @@
 				$this->db->delete("movies", ["mid" => $mid]);
 			}
 			
-			$this->db->query("ALTER TABLE movies AUTO_INCREMENT = ".$this->initialAutoIncrementValue);
+			$this->db->query("ALTER TABLE movies AUTO_INCREMENT = 0");
 		}
 
 		/**
@@ -46,6 +38,81 @@
 		*/
 		public function testSingletonIsInstanceOfDatabaseConnection() {
 			$this->assertInstanceOf("Database\Connection", Database\Connection::getInstance());
+		}
+
+		/**
+		* @author Allan Thue Rehhoff
+		*/
+		public function testInsertSingleRow() {
+			$insertId = $this->db->insert("movies", ["movie_name" => "test", "added" => date("Y-m-d h:i:s")]);
+			$this->assertInternalType("string", $insertId);
+
+			$this->idsToDeleteInOurMovies[] = $insertId;
+		}
+
+		/**
+		* @author Allan Thue Rehhoff
+		*/
+		public function testReplaceRowWithExistingPrimaryKey() {
+			$insertId = $this->db->insert("movies", ["movie_name" => "test", "added" => date("Y-m-d h:i:s")]);
+
+			$this->db->replace("movies", ["mid" => $insertId, "movie_name" => "test2"]);
+			$movieName = $this->db->fetchCell("movies", "movie_name", ["mid" => $insertId]);
+
+			$this->assertEquals("test2", $movieName);
+
+			$this->idsToDeleteInOurMovies[] = $insertId;
+		}
+
+		/**
+		* @author Allan Thue Rehhoff
+		*/
+		public function testInsertAndDeleteRow() {
+			$insertId = $this->db->insert("movies", ["movie_name" => "test", "added" => date("Y-m-d h:i:s")]);
+			$rowsAffected = $this->db->delete("movies", ["mid" => $insertId]);
+			$this->assertGreaterThan(0, $rowsAffected);
+		}
+
+		/**
+		* @author Allan Thue Rehhoff
+		*/
+		public function testInsertAndUpdateSingleRow() {
+			$newMovieName = "Exciting new movie";
+
+			$insertId = $this->db->insert("movies", ["movie_name" => "Old boring movie."]);
+			$this->assertInternalType("string", $insertId);
+
+			$rowsAffected = $this->db->update("movies", ["movie_name" => $newMovieName], ["mid" => $insertId]);
+			$this->assertGreaterThan(0, $rowsAffected);
+
+			$updatedRowMovieName = $this->db->fetchCell("movies", "movie_name", ["mid" => $insertId]);
+			$this->assertEquals($newMovieName, $updatedRowMovieName);
+
+			$this->idsToDeleteInOurMovies[] = $insertId;
+		}
+
+		/**
+		* @author Allan Thue Rehhoff
+		*/
+		public function testRollbackInsert() {
+			// Rollbacks doesn't work with MyISAM engines..
+			$checkMyIsam = $this->db->fetchField("information_schema.tables", "ENGINE", ["TABLE_NAME" => "movies"]);
+
+			if(strtolower($checkMyIsam) == "myisam") {
+				$this->db->query("ALTER TABLE movies ENGINE = InnoDB");
+			}
+
+			$latestMovieIdBeforeTransaction = $this->db->query("SELECT mid FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->mid;
+			$start = $this->db->transaction();
+			$this->assertTrue($start);
+
+			$this->db->insert("movies", ["movie_name" => "New movie 2", "added" => date("Y-m-d h:i:s")]);
+
+			$rollback = $this->db->rollback();
+			$this->assertTrue($rollback);
+
+			$latestMovieIdAfterTransaction = $this->db->query("SELECT mid FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->mid;
+			$this->assertEquals($latestMovieIdBeforeTransaction, $latestMovieIdAfterTransaction);
 		}
 
 		/**
@@ -108,75 +175,6 @@
 		public function testFetchSingleCellValueFromParameters() {
 			$res = $this->db->fetchCell("movies", "movie_name", ["mid" => 4]);
 			$this->assertEquals("Star wars", $res);
-		}
-
-		/**
-		* @author Allan Thue Rehhoff
-		*/
-		public function testInsertSingleRow() {
-			$insertId = $this->db->insert("movies", ["movie_name" => "test", "added" => date("Y-m-d h:i:s")]);
-			$this->assertInternalType("string", $insertId);
-
-			$this->idsToDeleteInOurMovies[] = $insertId;
-		}
-
-		/**
-		* @author Allan Thue Rehhoff
-		*/
-		public function testReplaceRowWithExistingPrimaryKey() {
-			$insertId = $this->db->insert("movies", ["movie_name" => "test", "added" => date("Y-m-d h:i:s")]);
-			$this->db->replace("movies", ["mid" => $insertId, "movie_name" => "test2"]);
-
-			$movieName = $this->db->fetchCell("movies", "movie_name", ["mid" => $insertId]);
-			$this->assertEquals("test2", $movieName);
-
-			$this->idsToDeleteInOurMovies[] = $insertId;
-		}
-
-		/**
-		* @author Allan Thue Rehhoff
-		*/
-		public function testInsertAndDeleteRow() {
-			$insertId = $this->db->insert("movies", ["movie_name" => "test", "added" => date("Y-m-d h:i:s")]);
-			$rowsAffected = $this->db->delete("movies", ["mid" => $insertId]);
-			$this->assertGreaterThan(0, $rowsAffected);
-		}
-
-		/**
-		* @author Allan Thue Rehhoff
-		*/
-		public function testInsertAndUpdateSingleRow() {
-			$newMovieName = "Exciting new movie";
-
-			$insertId = $this->db->insert("movies", ["movie_name" => "Old boring movie."]);
-			$this->assertInternalType("string", $insertId);
-
-			$rowsAffected = $this->db->update("movies", ["movie_name" => $newMovieName], ["mid" => $insertId]);
-			$this->assertGreaterThan(0, $rowsAffected);
-
-			$updatedRowMovieName = $this->db->fetchCell("movies", "movie_name", ["mid" => $insertId]);
-			$this->assertEquals($newMovieName, $updatedRowMovieName);
-
-			$this->idsToDeleteInOurMovies[] = $insertId;
-		}
-
-		/**
-		* @author Allan Thue Rehhoff
-		*/
-		public function testRollbackInsert() {
-			$latestMovieIdBeforeTransaction = $this->db->query("SELECT mid FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->mid;
-
-			$start = $this->db->transaction();
-			$this->assertTrue($start);
-
-			$this->db->insert("movies", ["movie_name" => "New movie", "added" => date("Y-m-d h:i:s")]);
-
-			$rollback = $this->db->rollback();
-			$this->assertTrue($rollback);
-
-			$latestMovieIdAfterTransaction = $this->db->query("SELECT mid FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->mid;
-
-			$this->assertEquals($latestMovieIdBeforeTransaction, $latestMovieIdAfterTransaction);
 		}
 
 		/**

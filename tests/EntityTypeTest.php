@@ -2,7 +2,7 @@
 	/**
 	* Tests Entity class against various common use cases
 	*/
-	class EntityTypeTest extends PHPUnit_Framework_TestCase {
+	class EntityTypeTest extends PHPUnit\Framework\TestCase {
 		public function setUp() {
 			try {
 				$this->db = new Database\Connection(DB_HOST, DB_USER, DB_PASS, EntityTypeTestTable);

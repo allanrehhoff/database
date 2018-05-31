@@ -10,11 +10,10 @@ namespace Database {
 	use \PDO;
 
 	class Connection {
-
 		/**
 		* @var (object) Internal PDO connection
 		*/
-		private $_connection
+		private $_connection;
 
 		/**
 		* @var (boolean) True if a transaction has started, false otherwise.
@@ -336,8 +335,7 @@ namespace Database {
 		/**
 		* Debugging prepared statements can be severely painful, use this as you would with \Database\Connection::query(); to output the resulting SQL
 		* Replaces any parameter placeholders in a query with the corrosponding value that parameter.
-		* Assumes anonymous parameters from $params are in the same order as specified in $query
-		* 
+		* Assumes anonymous parameters from $params are are in the same order as specified in $query
 		* @param (string) $sql A parameterized SQL query
 		* @param (array) $params Parameters for $statement
 		* @return (string)
@@ -349,21 +347,23 @@ namespace Database {
 			$keys = [];
 			$values = $params;
 
-			foreach ($params as $key => $value) {
-				if (is_string($key)) {
-					$keys[] = '/:'.$key.'/';
-				} else {
-					$keys[] = '/[?]/';
-				}
+			if(is_array($params)) {
+				foreach ($params as $key => $value) {
+					if (is_string($key)) {
+						$keys[] = '/:'.$key.'/';
+					} else {
+						$keys[] = '/[?]/';
+					}
 
-				if (is_string($value)) {
-					$values[$key] = "'" . $value . "'";
-				}
+					if (is_string($value)) {
+						$values[$key] = "'" . $value . "'";
+					}
 
-		        if (is_array($value)) {
-					$values[$key] = "('" . implode("','", $value) . "')";
-				} else if (is_null($value)) {
-					$values[$key] = "NULL";
+			        if (is_array($value)) {
+						$values[$key] = "('" . implode("','", $value) . "')";
+					} else if (is_null($value)) {
+						$values[$key] = "NULL";
+					}
 				}
 			}
 
