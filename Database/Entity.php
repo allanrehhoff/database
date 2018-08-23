@@ -62,16 +62,20 @@ namespace Database {
 		* Gets the value for a given property name
 		* @param (string) $name name of the property from whom to retrieve a value
 		* @return (mixed) A property value
+		* @throws Exception
 		* @author Allan Thue Rehhoff
 		*/
 		public function __get($name) {
+			if ($name == $this->getKeyField()) {
+				throw new \Exception("Cannot return key field from getter, try calling ".get_called_class()."::id(); in object context instead.");
+			}
+
 			return $this->data[$name];
 		}
 
 		/**
 		* Saves the entity to a long term storage.
 		* @author Allan Thue Rehhoff
-		* @throws Exception
 		* @return (mixed) if a new entity was just inserted, returns the primary key for that entity, otherwise the current data is returned
 		*/
 		public function save() {

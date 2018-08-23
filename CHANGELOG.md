@@ -1,4 +1,10 @@
 #Changelog#  
+v2.2 
+- Entity::__get(); now throws an exception w´hen key field is incorrectly accessed.  
+- Updated documentation blocks.  
+- Datebase\Connection::fetchCell(); now returns null on no results instead of false.  
+- Converted line endings to unix.  
+
 v2.2
 - Fixed a bug in Connection::fetchCell(); that would make the function always return null.  
 - Updated documentation for Connection::query(); method.  

@@ -204,7 +204,7 @@ namespace Database {
 		* Rows are not ordered, make sure your criteria matches the desired row.
 		* @param (string) $table Name of the table containing the row to be fetched
 		* @param (array) $criteria Criteria used to filter the rows.
-		* @return (object)
+		* @return (array)
 		* @author Allan Thue Rehhoff
 		* @since 1.0
 		*/
@@ -226,7 +226,7 @@ namespace Database {
 		public function fetchCell($table, $column, $criteria = null) {
 			$sql = "SELECT `".$column."` FROM ".$table." WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
 			$row = $this->query($sql, $criteria)->fetchAll();
-			return !empty($row) ? $row[0]->$column : false;
+			return !empty($row) ? $row[0]->$column : null;
 		}
 
 		/**
