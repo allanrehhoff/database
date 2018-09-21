@@ -5,14 +5,14 @@
 	class EntityTypeTest extends PHPUnit\Framework\TestCase {
 		public function setUp() {
 			try {
-				$this->db = new Database\Connection(DB_HOST, DB_USER, DB_PASS, EntityTypeTestTable);
+				$this->db = new Database\Connection(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 			} catch(Exception $e) {
 				$this->fail("Unable to setup tests, perhaps you forgot to configure database credentials.");
 			}
 		}
 
 		public function tearDown() {
-			db()->query("TRUNCATE test_table");
+			$this->db->query("TRUNCATE test_table");
 		}
 
 		/**
@@ -37,7 +37,7 @@
 			] );
 			$entity->save();
 
-			$this->assertGreaterThan(0, db()->lastInsertId());
+			$this->assertGreaterThan(0, $this->db->lastInsertId());
 		}
 
 		/**
@@ -50,7 +50,7 @@
 			$entity->set(["varchar_col" => "somevalue", "text_col" => "Lorem ipsum dolor sit amet"]);
 			$entity->save();
 			
-			$testId = db()->fetchField("test_table", "test_id", ["varchar_col" => "somevalue"]);
+			$testId = $this->db->fetchField("test_table", "test_id", ["varchar_col" => "somevalue"]);
 
 			$entity = Database\EntityType::load($testId);
 			$this->assertInstanceOf("Database\EntityType", $entity);
@@ -72,7 +72,7 @@
 			$entity->set(["varchar_col" => $varcharColValue, "text_col" => $textColValue]);
 			$insert_id = $entity->save();
 
-			$this->assertEquals($insert_id, db()->lastInsertId());
+			$this->assertEquals($insert_id, $this->db->lastInsertId());
 			$loadedEntity = new Database\EntityType($insert_id);
 
 			$this->assertNotEmpty($loadedEntity);

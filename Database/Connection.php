@@ -159,9 +159,39 @@ namespace Database {
 		}
 
 		/**
+		* Wrapper around PDO::prepare(); to provide support for the IN keyword.
+		* @param (string) $sql The parameterized SQL string to query against the database
+		* @param (array) $filters Arguments to pass along with the query
+		* @since 2.3
+		* @author Allan Thue Rehhoff
+		* @return Returns a prepared SQL statement
+		*/
+		public function prepare($sql, &$filters) {
+			if(!empty($filters)) {
+				foreach($filters as $column => $filter) {
+					if(is_array($filter)) {
+						$tmparr = [];
+						foreach ($filter as $i => $item) {
+							$key = "val".$i;
+							$tmparr[$key]  = $item;
+							$filters[$key] = $item;
+						}
+
+						// (:val0, :val1, :val2)
+						$in = "(:".implode(", :", array_keys($tmparr)).')';
+						$sql = str_replace(":".$column, $in, $sql);
+						unset($filters[$column]);
+					}
+				}
+			}
+
+			return $this->_connection->prepare($sql);
+		}
+
+		/**
 		* Execute a parameterized SQL query.
-		* @param (string) $sql The SQL string to qeury against the database
-		* @param (array) $args Arguments to pass along with the query
+		* @param (string) $sql The parameterized SQL string to query against the database
+		* @param (array) $filters Arguments to pass along with the query.
 		* @param (int) $fetchMode Set fetch mode for the query performed. Must be one of PDO::FETCH_* default is PDO::FETCH_OBJECT
 		* @return (object) The prepared PDO statement after execution.
 		* @throws Exception
@@ -172,10 +202,9 @@ namespace Database {
 		public function query($sql, $filters = null, $fetchMode = PDO::FETCH_OBJ) {
 			try {
 				$this->statement = null;
-				$this->statement = $this->_connection->prepare($sql);
+				$this->statement = $this->prepare($sql, $filters);
 				$this->statement->execute($filters);
 				$this->statement->setFetchMode($fetchMode);
-
 				$this->queryCount++;
 			} catch(PDOException $exception) {
 				throw new Exception($exception->getCode().": ".$exception->getMessage(), (int) $exception->getCode());
@@ -184,6 +213,42 @@ namespace Database {
 			}
 
 			return $this->statement;
+		}
+
+		/**
+		* Fetch a single row from the given criteria.
+		* Rows are not ordered, make sure your criteria matches the desired row.
+		* @param (string) $table Name of the table containing the row to be fetched
+		* @param (array) $criteria Criteria used to filter the rows.
+		* @return (mixed) Returns the first row in the result set, false upon failure.
+		* @author Allan Thue Rehhoff
+		* @since 1.0
+		*/
+		public function fetchRow($table, $criteria = null) {
+			$sql = "SELECT * FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
+			return $this->query($sql, $criteria)->fetch();
+		}
+
+		/**
+		* Fetch a cells value from the given criteria.
+		* @param (string) $table Name of the table containing the row to be fetched
+		* @param (string) $column Column name in $table where cell value will be returned
+		* @return (mixed) Returns a single column from the next row of a result set or FALSE if there are no more rows.
+		* @param (array) $criteria Criteria used to filter the rows.
+		* @author Allan Thue Rehhoff
+		* @since 1.0
+		*/
+		public function fetchCell($table, $column, $criteria = null) {
+			$sql = "SELECT `".$column."` FROM ".$table." WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
+			return $this->query($sql, $criteria)->fetchColumn(0);
+		}
+
+		/**
+		* Alias of \Database\Connection::fetchCell implemented for the drupal developers sake.
+		* @see \Database\Connection::fetchCell();
+		*/
+		public function fetchField($table, $column, $criteria = null) {
+			return $this->fetchCell($table, $column, $criteria);
 		}
 
 		/**
@@ -197,44 +262,6 @@ namespace Database {
 		public function select($table, $criteria = null) {
 			$sql = "SELECT * FROM ".$table." WHERE ".$this->keysToSql($criteria, "AND");
 			return $this->query($sql, $criteria)->fetchAll();
-		}
-
-		/**
-		* Fetch a single row from the given criteria.
-		* Rows are not ordered, make sure your criteria matches the desired row.
-		* @param (string) $table Name of the table containing the row to be fetched
-		* @param (array) $criteria Criteria used to filter the rows.
-		* @return (array)
-		* @author Allan Thue Rehhoff
-		* @since 1.0
-		*/
-		public function fetchRow($table, $criteria = null) {
-			$sql = "SELECT * FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
-			$row = $this->query($sql, $criteria)->fetchAll();
-			return !empty($row) ? $row[0] : [];
-		}
-
-		/**
-		* Fetch a cells value from the given criteria.
-		* @param (string) $table Name of the table containing the row to be fetched
-		* @param (string) $column Column name in $table where cell value will be returned
-		* @return (mixed)
-		* @param (array) $criteria Criteria used to filter the rows.
-		* @author Allan Thue Rehhoff
-		* @since 1.0
-		*/
-		public function fetchCell($table, $column, $criteria = null) {
-			$sql = "SELECT `".$column."` FROM ".$table." WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
-			$row = $this->query($sql, $criteria)->fetchAll();
-			return !empty($row) ? $row[0]->$column : null;
-		}
-
-		/**
-		* Alias of \Database\Connection::fetchCell implemented for the drupal developers sake.
-		* @see \Database\Connection::fetchCell();
-		*/
-		public function fetchField($table, $column, $criteria = null) {
-			return $this->fetchCell($table, $column, $criteria);
 		}
 
 		/**
@@ -313,6 +340,7 @@ namespace Database {
 
 		/**
 		* Internal function to convert column=>value pairs into SQL.
+		* If a parameter value is an array, it will be treated as such, using the IN operator.
 		* @param (array) $array Array of arguments to parse (You sure yet that it's an array?)
 		* @param (string) $seperator String seperator to seperate the pairs with
 		* @param (string) $variablePrefix string to use for prefixing values in the SQL
@@ -321,12 +349,18 @@ namespace Database {
 		* @author Allan Thue Rehhoff
 		* @since 1.0
 		*/
-		private function keysToSql($array, $seperator, $variablePrefix = "") {
+		private function keysToSql(&$array, $seperator, $variablePrefix = "") {
 			if ($array == null) return "1";
 
 			$list = [];
 			foreach ($array as $column => $value) {
-				$list[] = " `$column` = :".$variablePrefix.$column;
+				if(is_array($value)) {
+					$operator = "IN";
+				} else {
+					$operator = '=';
+				}
+
+				$list[] = " `$column` $operator :".$variablePrefix.$column;
 			}
 
 			return implode(' '.$seperator, $list);

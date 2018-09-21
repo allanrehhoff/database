@@ -1,4 +1,8 @@
 #Changelog#  
+v2.3
+- Support for IN operator through query();, update(); and select();  
+- Added a few tests to test the recent changes.  
+
 v2.2 
 - Entity::__get(); now throws an exception w´hen key field is incorrectly accessed.  
 - Updated documentation blocks.  

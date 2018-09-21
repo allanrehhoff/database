@@ -15,7 +15,7 @@
 		*/
 		public function setUp() {
 			try {
-				$this->db = new \Database\Connection(DB_HOST, DB_USER, DB_PASS, DatabaseConnectionTestTable);
+				$this->db = new \Database\Connection(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 			} catch(Exception $e) {
 				$this->fail($e->getMessage());
 			}
@@ -27,7 +27,7 @@
 		*/
 		public function tearDown() {
 			foreach($this->idsToDeleteInOurMovies as $mid) {
-				$this->db->delete("movies", ["mid" => $mid]);
+			//	$this->db->delete("movies", ["mid" => $mid]);
 			}
 			
 			$this->db->query("ALTER TABLE movies AUTO_INCREMENT = 0");
@@ -58,7 +58,6 @@
 
 			$this->db->replace("movies", ["mid" => $insertId, "movie_name" => "test2"]);
 			$movieName = $this->db->fetchCell("movies", "movie_name", ["mid" => $insertId]);
-
 			$this->assertEquals("test2", $movieName);
 
 			$this->idsToDeleteInOurMovies[] = $insertId;
@@ -71,6 +70,17 @@
 			$insertId = $this->db->insert("movies", ["movie_name" => "test", "added" => date("Y-m-d h:i:s")]);
 			$rowsAffected = $this->db->delete("movies", ["mid" => $insertId]);
 			$this->assertGreaterThan(0, $rowsAffected);
+		}
+
+		
+		/**
+		* @author Allan Thue Rehhoff
+		*/
+		public function testUpdateStatement() {
+			$this->db->update("movies", ["movie_name" => time()], ["mid" => 1]);
+
+			$rowcount = $this->db->update("movies", ["movie_name" => "Star wars"], ["mid" => 1]);
+			$this->assertEquals($rowcount, 1);
 		}
 
 		/**
@@ -156,7 +166,7 @@
 		* @author Allan Thue Rehhoff
 		*/
 		public function testSelectQueryMethodWithParameters() {
-			$res = $this->db->select("movies", ["mid" => 4]);
+			$res = $this->db->select("movies", ["mid" => 1]);
 			$this->assertInternalType("array", $res);
 			$this->assertNotEmpty($res);
 		}
@@ -165,15 +175,17 @@
 		* @author Allan Thue Rehhoff
 		*/
 		public function testSelectSingleRowFromParameters() {
-			$res = $this->db->fetchRow("movies", ["mid" => 4, "movie_name" => "Star wars"]);
+			$res = $this->db->fetchRow("movies", ["mid" => 1, "movie_name" => "Star wars"]);
 			$this->assertInternalType("object", $res);
+
+			$this->db->fetchRow();
 		}
 
 		/**
 		* @author Allan Thue Rehhoff
 		*/
 		public function testFetchSingleCellValueFromParameters() {
-			$res = $this->db->fetchCell("movies", "movie_name", ["mid" => 4]);
+			$res = $this->db->fetchCell("movies", "movie_name", ["mid" => 1]);
 			$this->assertEquals("Star wars", $res);
 		}
 
@@ -216,23 +228,6 @@
 			$this->assertNotEquals($latestMovieNameBeforeCommit, $latestMovieNameAfterCommit);
 
 			$this->idsToDeleteInOurMovies[] = $insertId;
-		}
-
-		/**
-		* @author Allan Thue Rehhoff
-		* @todo Create a more thorough test.
-		* Note: ->fetchCell(); appears to have a problem with SQL functions in $column parameter.
-		*/
-		public function testAgainstSqlInjection() {
-			try {
-				$this->db->select("movies", ["mid" => "' --"]);
-				$this->db->query("INSERT INTO `movies` (movie_name, added) VALUES (:movie_name, :date)", ["movie_name" => "'", "date" => date("Y-m-d h:i:s")]);
-				$insertId = $this->db->lastInsertId();
-				$this->db->query("UPDATE `movies` SET movie_name = :newname WHERE mid = :mid", ["newname" => "-- '", "mid" => $insertId]);
-				$this->idsToDeleteInOurMovies[] = $insertId;
-			} catch(Exception $e) {
-				$this->fail("SQL injection prevention test failed (shame on me): ".$e->getMessage());
-			}
 		}
 	}
 ?>
