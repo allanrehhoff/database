@@ -7,9 +7,7 @@
 * @version 2.0
 */
 namespace Database {
-	use \PDO;
-
-	class Connection {
+	class Connection extends \PDO {
 		/**
 		* @var (object) Internal PDO connection
 		*/
@@ -62,9 +60,10 @@ namespace Database {
 			}
 
 			try {
-				$this->_connection = new PDO("mysql:host=".$hostname.";dbname=".$database, $username, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-				$this->_connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-				$this->_connection->query("SET NAMES utf8mb4");
+				parent::__construct("mysql:host=".$hostname.";dbname=".$database, $username, $password, [self::ATTR_ERRMODE => self::ERRMODE_EXCEPTION]);
+				$this->setAttribute(self::ATTR_ERRMODE, self::ERRMODE_EXCEPTION);
+				$this->setAttribute(self::ATTR_STATEMENT_CLASS, ["Database\Statement", [$this]]);
+				$this->query("SET NAMES utf8mb4");
 			} catch (PDOException $exception) {
 				throw new Exception($exception->getMessage(), $exception->getCode());
 			}
@@ -80,7 +79,6 @@ namespace Database {
 		*/
 		public function __destruct() {
 			$this->statement = null;
-			$this->_connection = null;
 		}
 
 		/**
@@ -90,8 +88,8 @@ namespace Database {
 		* @since 1.3
 		*/
 		public function __call($method, $params = []) {
-			if(method_exists($this->_connection, $method)) {
-				return call_user_func_array([$this->_connection, $method], $params);
+			if(method_exists($this, $method)) {
+				return call_user_func_array([$this, $method], $params);
 			} else {
 				throw new Exception("PDO::".$method." no such method.");
 			}
@@ -115,46 +113,57 @@ namespace Database {
 		* @author Allan Thue Rehhoff
 		*/
 		public function getConnection() {
-			return $this->_connection;
+			return $this;
 		}
 
 		/**
 		* Turns off autocommit mode. Until changes made to the database are committed.
 		* @author Allan Thue Rehhoff
 		* @return (boolean)
+		* @since 2.4
+		*/
+		public function beginTransaction() {
+			return $this->transactionStarted = parent::beginTransaction();
+		}
+
+		/**
+		* Helping wrapper function for PDO::beginTranstion();
+		* @see Database\Connection::beginTransaction();
+		* @author Allan Thue Rehhoff
+		* @return (boolean)
 		* @since 1.3
 		*/
 		public function transaction() {
-			return $this->transactionStarted = $this->_connection->beginTransaction();
+			return $this->beginTransaction();
 		}
 
 		/**
 		* Commits a transaction, returning the database connection to autocommit mode.
 		* @author Allan Thue Rehhoff
-		* @throws Exception
+		* @throws PDOException
 		* @return (bool)
 		* @since 1.3
 		*/
 		public function commit() {
 			if($this->transactionStarted === true) {
-				return $this->_connection->commit();
+				return parent::commit();
 			} else {
-				throw new Exception("Attempted to commit when not in transaction.");
+				throw new PDOException("Attempted to commit when not in transaction, or transaction failed to start.");
 			}
 		}
 
 		/**
 		* Rolls back the current transaction
 		* @author Allan Thue Rehhoff
-		* @throws Exception
+		* @throws PDOException
 		* @return (bool)
 		* @since 1.3
 		*/
 		public function rollback() {
 			if($this->transactionStarted === true) {
-				return $this->_connection->rollBack();
+				return parent::rollBack();
 			} else {
-				throw new Exception("Attempted rollback when not in transaction.");
+				throw new PDOException("Attempted rollback when not in transaction.");
 			}
 		}
 
@@ -166,26 +175,26 @@ namespace Database {
 		* @author Allan Thue Rehhoff
 		* @return Returns a prepared SQL statement
 		*/
-		public function prepare($sql, &$filters) {
-			if(!empty($filters)) {
-				foreach($filters as $column => $filter) {
-					if(is_array($filter)) {
+		public function prepare($sql, $driverOptions = []) {
+			if(!empty($this->filters)) {
+				foreach($this->filters as $column => $filter) {
+					if(is_array($filter) === true) {
 						$tmparr = [];
 						foreach ($filter as $i => $item) {
 							$key = "val".$i;
 							$tmparr[$key]  = $item;
-							$filters[$key] = $item;
+							$this->filters[$key] = $item;
 						}
 
 						// (:val0, :val1, :val2)
 						$in = "(:".implode(", :", array_keys($tmparr)).')';
 						$sql = str_replace(":".$column, $in, $sql);
-						unset($filters[$column]);
+						unset($this->filters[$column]);
 					}
 				}
 			}
 
-			return $this->_connection->prepare($sql);
+			return parent::prepare($sql, $driverOptions);
 		}
 
 		/**
@@ -199,17 +208,18 @@ namespace Database {
 		* @todo Find and alternative to casting errorcodes to integers for handling error codes.
 		* @since 1.0
 		*/
-		public function query($sql, $filters = null, $fetchMode = PDO::FETCH_OBJ) {
+		public function query($sql, $filters = null, $fetchMode = self::FETCH_OBJ) {
 			try {
+				$this->filters 	 = $filters;
 				$this->statement = null;
-				$this->statement = $this->prepare($sql, $filters);
-				$this->statement->execute($filters);
+				$this->statement = $this->prepare($sql);
+				$this->statement->execute($this->filters);
 				$this->statement->setFetchMode($fetchMode);
 				$this->queryCount++;
 			} catch(PDOException $exception) {
 				throw new Exception($exception->getCode().": ".$exception->getMessage(), (int) $exception->getCode());
 			} finally {
-				$this->lastQuery = $this->interpolateQuery($sql, $filters);
+				$this->lastQuery = $sql;
 			}
 
 			return $this->statement;
@@ -233,13 +243,13 @@ namespace Database {
 		* Fetch a cells value from the given criteria.
 		* @param (string) $table Name of the table containing the row to be fetched
 		* @param (string) $column Column name in $table where cell value will be returned
-		* @return (mixed) Returns a single column from the next row of a result set or FALSE if there are no more rows.
 		* @param (array) $criteria Criteria used to filter the rows.
+		* @return (mixed) Returns a single column from the next row of a result set or FALSE if there are no rows.
 		* @author Allan Thue Rehhoff
 		* @since 1.0
 		*/
 		public function fetchCell($table, $column, $criteria = null) {
-			$sql = "SELECT `".$column."` FROM ".$table." WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
+			$sql = "SELECT `".$column."` FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
 			return $this->query($sql, $criteria)->fetchColumn(0);
 		}
 
@@ -251,6 +261,20 @@ namespace Database {
 			return $this->fetchCell($table, $column, $criteria);
 		}
 
+		/**
+		* Fetches a column of values from the given table.
+		* @param (string) $table Name of the table containing the rows to be fetched
+		* @param (string) $column Column name in $table where value should be returned from.
+		* @param (array) $criteria Criteria used to filter the rows.
+		* @return (mixed) Returns an array containing all the rows matching in the resultset,
+		* 				  An empty array is returned if there are zero results to fetch, or FALSE on failure.
+		* @author Allan Thue Rehhoff
+		* @since 2.4
+		*/
+		public function fetchCol($table, $column, $criteria) {
+			$sql = "SELECT `".$column."` FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND");
+			return $this->query($sql, $criteria)->fetchCol();
+		}
 		/**
 		* Select rows based on the given criteria
 		* @param (string) $table Name of the table to query
@@ -275,6 +299,7 @@ namespace Database {
 		public function insert($table, $variables = null) {
 			$variables = ($variables != null) ? $variables : [];
 			$this->createRow("INSERT", $table, $variables);
+
 			return $this->lastInsertId();
 		}
 
@@ -288,22 +313,6 @@ namespace Database {
 		*/
 		public function replace($table, $variables) {
 			return $this->createRow("REPLACE", $table, $variables)->rowCount();
-		}
-
-		/**
-		* Internal function to insert or replace a row.
-		* @param (string) $type SQL operator to with the INTO can be either INSERT or REPLACE
-		* @param (string) $table Table to insert/replace the row in.
-		* @param (array) $variables Column => Value pairs to insert.
-		* @return (string) The last inserted ID
-		* @author Allan Thue Rehhoff
-		* @since 1.0
-		*/
-		private function createRow($type, $table, $variables) {
-			$binds = [];
-			foreach ($variables as $key => $value) $binds[] = ":$key";
-			$sql = $type. " INTO "."`$table` (" . implode(", ", array_keys($variables)) . ") VALUES (" . implode(", ", $binds) . ")";
-			return $this->query($sql, $variables);
 		}
 
 		/**
@@ -339,6 +348,22 @@ namespace Database {
 		}
 
 		/**
+		* Internal function to insert or replace a row.
+		* @param (string) $type SQL operator to with the INTO can be either INSERT or REPLACE
+		* @param (string) $table Table to insert/replace the row in.
+		* @param (array) $variables Column => Value pairs to insert.
+		* @return (string) The last inserted ID
+		* @author Allan Thue Rehhoff
+		* @since 1.0
+		*/
+		private function createRow($type, $table, $variables) {
+			$binds = [];
+			foreach ($variables as $key => $value) $binds[] = ":$key";
+			$sql = $type. " INTO "."`$table` (" . implode(", ", array_keys($variables)) . ") VALUES (" . implode(", ", $binds) . ")";
+			return $this->query($sql, $variables);
+		}
+
+		/**
 		* Internal function to convert column=>value pairs into SQL.
 		* If a parameter value is an array, it will be treated as such, using the IN operator.
 		* @param (array) $array Array of arguments to parse (You sure yet that it's an array?)
@@ -370,14 +395,34 @@ namespace Database {
 		* Debugging prepared statements can be severely painful, use this as you would with \Database\Connection::query(); to output the resulting SQL
 		* Replaces any parameter placeholders in a query with the corrosponding value that parameter.
 		* Assumes anonymous parameters from $params are are in the same order as specified in $query
-		* @param (string) $sql A parameterized SQL query
-		* @param (array) $params Parameters for $statement
+		* @param (string) $query A parameterized SQL query
+		* @param (array) $filter Parameters for $query
+		* @return (string) The interpolated query.
+		* @author Allan Thue Rehhoff
+		* @since 2.4
+		*/
+		public function debugQuery($query, $filters) {
+			$this->filters 	 = $filters;
+			$statement = $this->prepare($query);
+
+			$tmpFilters = [];
+			foreach ($this->filters as $column => $value) $tmpFilters[":".$column] = "'".$value."'";
+
+			return strtr($statement->queryString, $tmpFilters);
+		}
+
+		/**
+		* Wrapper function for debugging purposes
+		* @see Database\Connection::debugQuery()
+		* @param (string) $query A parameterized SQL query
+		* @param (array) $params Parameters for $query
 		* @return (string)
 		* @author Allan Thue Rehhoff
 		* @since 1.1
-		* @todo Support UPDATE statements as seen in \Database\Connection::update();
 		*/
 		public function interpolateQuery($query, $params) {
+			return $this->debugQuery($query, $params);
+			/*
 			$keys = [];
 			$values = $params;
 
@@ -402,6 +447,7 @@ namespace Database {
 			}
 
 			return preg_replace($keys, $values, $query, 1, $count);
+			*/
 		}
 
 		/**
@@ -410,8 +456,8 @@ namespace Database {
 		* @author Allan Thue Rehhoff
 		* @since 1.0
 		*/
-		public function lastInsertId() {
-			return $this->_connection->lastInsertId();
+		public function lastInsertId($seqname = null) {
+			return parent::lastInsertId($seqname);
 		}
 	}
 }

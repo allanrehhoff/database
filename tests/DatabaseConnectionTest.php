@@ -26,9 +26,7 @@
 		* @author Allan Thue Rehhoff
 		*/
 		public function tearDown() {
-			foreach($this->idsToDeleteInOurMovies as $mid) {
-			//	$this->db->delete("movies", ["mid" => $mid]);
-			}
+			
 			
 			$this->db->query("ALTER TABLE movies AUTO_INCREMENT = 0");
 		}
@@ -71,7 +69,6 @@
 			$rowsAffected = $this->db->delete("movies", ["mid" => $insertId]);
 			$this->assertGreaterThan(0, $rowsAffected);
 		}
-
 		
 		/**
 		* @author Allan Thue Rehhoff
@@ -106,11 +103,11 @@
 		*/
 		public function testRollbackInsert() {
 			// Rollbacks doesn't work with MyISAM engines..
-			$checkMyIsam = $this->db->fetchField("information_schema.tables", "ENGINE", ["TABLE_NAME" => "movies"]);
+			$this->db->query("ALTER TABLE movies ENGINE = InnoDB");
+			//$checkMyIsam = $this->db->fetchField("information_schema.tables", "ENGINE", ["TABLE_NAME" => "movies"]);
 
-			if(strtolower($checkMyIsam) == "myisam") {
-				$this->db->query("ALTER TABLE movies ENGINE = InnoDB");
-			}
+			//if(strtolower($checkMyIsam) == "myisam") {
+			//}
 
 			$latestMovieIdBeforeTransaction = $this->db->query("SELECT mid FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->mid;
 			$start = $this->db->transaction();
@@ -123,6 +120,28 @@
 
 			$latestMovieIdAfterTransaction = $this->db->query("SELECT mid FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->mid;
 			$this->assertEquals($latestMovieIdBeforeTransaction, $latestMovieIdAfterTransaction);
+		}
+
+		/**
+		* @author Allan Thue Rehhoff
+		*/
+		public function testCommitInsert() {
+			$newMovieName = "boring thing";
+
+			$start = $this->db->transaction();
+			$this->assertTrue($start);
+
+			$latestMovieNameBeforeCommit = $this->db->query("SELECT movie_name FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->movie_name;
+			$insertId = $this->db->insert("movies", ["movie_name" => $newMovieName]);
+
+			$commit = $this->db->commit();
+			$this->assertTrue($commit);
+
+			$latestMovieNameAfterCommit = $this->db->query("SELECT movie_name FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->movie_name;
+
+			$this->assertNotEquals($latestMovieNameBeforeCommit, $latestMovieNameAfterCommit);
+
+			$this->idsToDeleteInOurMovies[] = $insertId;
 		}
 
 		/**
@@ -178,7 +197,8 @@
 			$res = $this->db->fetchRow("movies", ["mid" => 1, "movie_name" => "Star wars"]);
 			$this->assertInternalType("object", $res);
 
-			$this->db->fetchRow();
+			$res = $this->db->fetchRow("movies", ["mid" => time()]);
+			$this->assertFalse($res);
 		}
 
 		/**
@@ -192,9 +212,22 @@
 		/**
 		* @author Allan Thue Rehhoff
 		*/
-		public function testSimpleQueryInterpolation() {
+		public function testFetchColumn() {
+			$res1 = $this->db->query("SELECT movie_name FROM movies WHERE mid in :mid", ["mid" => [1]])->fetchCol();
+			$this->assertNotEmpty($res1);
+
+			$res2 = $this->db->fetchCol("movies", "movie_name", ["mid" => 1]);
+			$this->assertNotEmpty($res2);
+
+			$this->assertEquals($res1, $res2);
+		}
+
+		/**
+		* @author Allan Thue Rehhoff
+		*/
+		public function testSimpleQueryDebugging() {
 			$queryInterpolatedCorrect = "SELECT foo FROM bar WHERE baz = 'something'";
-			$queryInterpolatedFromMethod = $this->db->interpolateQuery("SELECT foo FROM bar WHERE baz = :smth", ["smth" => "something"]);
+			$queryInterpolatedFromMethod = $this->db->debugQuery("SELECT foo FROM bar WHERE baz = :smth", ["smth" => "something"]);
 
 			$this->assertEquals($queryInterpolatedCorrect, $queryInterpolatedFromMethod);
 		}
@@ -202,32 +235,10 @@
 		/**
 		* @author Allan Thue Rehhoff
 		*/
-		public function testQueryInterpolateIN() {
-			$correctQuery = "SELECT foo FROM bar WHERE baz IN ('this','or','that')";
-			$queryInterpolated = $this->db->interpolateQuery("SELECT foo FROM bar WHERE baz IN :arr", ["arr" => ["this", "or", "that"]]);
+		public function testDebugQueryUsingInKeyword() {
+			$correctQuery = "SELECT foo FROM bar WHERE baz IN ('this', 'or', 'that')";
+			$queryInterpolated = $this->db->debugQuery("SELECT foo FROM bar WHERE baz IN :arr", ["arr" => ["this", "or", "that"]]);
 			$this->assertEquals($correctQuery, $queryInterpolated);
-		}
-
-		/**
-		* @author Allan Thue Rehhoff
-		*/
-		public function testCommitInsert() {
-			$newMovieName = "boring thing";
-
-			$start = $this->db->transaction();
-			$this->assertTrue($start);
-
-			$latestMovieNameBeforeCommit = $this->db->query("SELECT movie_name FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->movie_name;
-			$insertId =$this->db->insert("movies", ["movie_name" => $newMovieName]);
-
-			$commit = $this->db->commit();
-			$this->assertTrue($commit);
-
-			$latestMovieNameAfterCommit = $this->db->query("SELECT movie_name FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->movie_name;
-
-			$this->assertNotEquals($latestMovieNameBeforeCommit, $latestMovieNameAfterCommit);
-
-			$this->idsToDeleteInOurMovies[] = $insertId;
 		}
 	}
 ?>

@@ -1,4 +1,11 @@
 #Changelog#  
+v2.4
+- *This update might not be backwards compatible on all systems, depending on implementation.*  
+- \Database\Connection now extends PHP's PDO class, all the same functions can now be used with a custom statement class.
+- Added a more robust debugQuery(); method.  
+- Updated tests to be compatible with the update.  
+- Updated documentation.  
+
 v2.3
 - Support for IN operator through query();, update(); and select();  
 - Added a few tests to test the recent changes.  
