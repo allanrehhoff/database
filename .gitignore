@@ -1,3 +1,4 @@
 tests/bootstrap.php
 tests/phpunit.xml
 error_log
+/vendor/
