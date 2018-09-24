@@ -1,9 +1,11 @@
 {
-    "version": "2.4",
     "name": "rehhoff/database",
     "description": "A simple database library to abstract away your database queries.",
     "type": "library",
     "license": "WTFPL",
+    "keywords": [
+        "database"
+    ],
     "authors": [
         {
             "name": "allanrehhoff",
