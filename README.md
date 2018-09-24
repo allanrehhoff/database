@@ -22,7 +22,7 @@ Simply copy the EntityType class to a new file and rename it accordingly.
 	}
 ?> 
 ```
-
+ 
 ##Installing##
 
 Install with composer: ```composer require rehhoff/database```
