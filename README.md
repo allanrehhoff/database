@@ -2,7 +2,7 @@
 _By Allan Rehhoff_
 
 This repository contains a class for querying your database in an efficient way and object oriented way.  
-It also features a few classes to speed up CMS / CRUD development.  
+It also features a few classes to speed up CMS / CRUD development, and abstracts away your database queries.  
 
 Simply copy the EntityType class to a new file and rename it accordingly.
 
@@ -22,6 +22,12 @@ Simply copy the EntityType class to a new file and rename it accordingly.
 	}
 ?> 
 ```
+
+##Installing##
+
+Install with composer: ```composer require rehhoff/database```
+
+Install manually: ```<?php require "path/to/vendor/dir/database/autoload.php"; ?>```
 
 This tool is licensed under [ WTFPL ](http://www.wtfpl.net/)
 
