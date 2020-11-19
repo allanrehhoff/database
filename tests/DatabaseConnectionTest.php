@@ -13,7 +13,7 @@
 		* Sets up the required database connection
 		* @author Allan Thue Rehhoff
 		*/
-		public function setUp() {
+		public function setUp() :void {
 			try {
 				$this->db = new \Database\Connection(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 			} catch(Exception $e) {
@@ -25,7 +25,7 @@
 		* Cleans up the table after testing, since i dont want the table we are testing against to clutter up with random crap.
 		* @author Allan Thue Rehhoff
 		*/
-		public function tearDown() {
+		public function tearDown() :void {
 			
 			
 			$this->db->query("ALTER TABLE movies AUTO_INCREMENT = 0");
@@ -43,7 +43,7 @@
 		*/
 		public function testInsertSingleRow() {
 			$insertId = $this->db->insert("movies", ["movie_name" => "test", "added" => date("Y-m-d h:i:s")]);
-			$this->assertInternalType("string", $insertId);
+			$this->assertIsInt($insertId);
 
 			$this->idsToDeleteInOurMovies[] = $insertId;
 		}
@@ -87,7 +87,7 @@
 			$newMovieName = "Exciting new movie";
 
 			$insertId = $this->db->insert("movies", ["movie_name" => "Old boring movie."]);
-			$this->assertInternalType("string", $insertId);
+			$this->assertIsInt($insertId);
 
 			$rowsAffected = $this->db->update("movies", ["movie_name" => $newMovieName], ["mid" => $insertId]);
 			$this->assertGreaterThan(0, $rowsAffected);
@@ -151,7 +151,7 @@
 			$sdb = Database\Connection::getInstance();
 			$this->assertInstanceOf("Database\Connection", $sdb);
 			$res = $sdb->query("SELECT mid FROM movies LIMIT 1")->fetchAll();
-			$this->assertInternalType("array", $res);
+			$this->assertIsArray($res);
 		}
 
 		/**
@@ -159,7 +159,7 @@
 		*/
 		public function testSelectQueryWithoutParameter() {
 			$res = $this->db->query("SELECT mid FROM movies")->fetchAll();
-			$this->assertInternalType("array", $res);
+			$this->assertIsArray($res);
 			$this->assertNotEmpty($res);
 		}
 
@@ -168,7 +168,7 @@
 		*/
 		public function testSelectFromParameterizedQuery() {
 			$res = $this->db->query("SELECT mid FROM movies WHERE mid > :num", ["num" => 1])->fetchAll();
-			$this->assertInternalType("array", $res);
+			$this->assertIsArray($res);
 			$this->assertNotEmpty($res);
 		}
 
@@ -177,7 +177,7 @@
 		*/
 		public function testSelectQueryFromWrapperMethod() {
 			$res = $this->db->select("movies");
-			$this->assertInternalType("array", $res);
+			$this->assertIsArray($res);
 			$this->assertNotEmpty($res);	
 		}
 
@@ -186,7 +186,7 @@
 		*/
 		public function testSelectQueryMethodWithParameters() {
 			$res = $this->db->select("movies", ["mid" => 1]);
-			$this->assertInternalType("array", $res);
+			$this->assertIsArray($res);
 			$this->assertNotEmpty($res);
 		}
 
@@ -195,7 +195,7 @@
 		*/
 		public function testSelectSingleRowFromParameters() {
 			$res = $this->db->fetchRow("movies", ["mid" => 1, "movie_name" => "Star wars"]);
-			$this->assertInternalType("object", $res);
+			$this->assertIsObject($res);
 
 			$res = $this->db->fetchRow("movies", ["mid" => time()]);
 			$this->assertFalse($res);

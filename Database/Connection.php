@@ -356,11 +356,11 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			private function createRow($type, $table, $variables) : int {
+			private function createRow($type, $table, $variables) : Statement {
 				$binds = [];
 				foreach ($variables as $key => $value) $binds[] = ":$key";
 				$sql = $type. " INTO "."`$table` (" . implode(", ", array_keys($variables)) . ") VALUES (" . implode(", ", $binds) . ")";
-				return (int) $this->query($sql, $variables);
+				return $this->query($sql, $variables);
 			}
 
 			/**

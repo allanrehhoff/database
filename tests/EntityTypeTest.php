@@ -3,7 +3,7 @@
 	* Tests Entity class against various common use cases
 	*/
 	class EntityTypeTest extends PHPUnit\Framework\TestCase {
-		public function setUp() {
+		public function setUp() :void {
 			try {
 				$this->db = new Database\Connection(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 			} catch(Exception $e) {
@@ -11,7 +11,7 @@
 			}
 		}
 
-		public function tearDown() {
+		public function tearDown() :void {
 			$this->db->query("TRUNCATE test_table");
 		}
 
