@@ -1,4 +1,10 @@
 #Changelog#  
+v3.0
+- Backwards incompatible update
+- Now includes function return types
+- Now includes argument type hints
+- Updated docblocks
+
 v2.4
 - *This update might not be backwards compatible on all systems, depending on implementation.*  
 - \Database\Connection now extends PHP's PDO class, all the same functions can now be used with a custom statement class.

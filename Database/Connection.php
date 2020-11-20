@@ -159,7 +159,7 @@
 			* @return (boolean)
 			* @since 1.3
 			*/
-			public function rollback() : bool{
+			public function rollback() : bool {
 				if($this->transactionStarted === true) {
 					return parent::rollBack();
 				} else {
@@ -170,7 +170,7 @@
 			/**
 			* Wrapper around PDO::prepare(); to provide support for the IN keyword.
 			* @param (string) $sql The parameterized SQL string to query against the database
-			* @param (array) $filters Arguments to pass along with the query
+			* @param (array) $driverOptions Arguments to pass along with the query
 			* @since 2.3
 			* @author Allan Thue Rehhoff
 			* @return Returns a prepared SQL statement, instance of Database\Statement
@@ -208,7 +208,7 @@
 			* @todo Find and alternative to casting errorcodes to integers for handling error codes.
 			* @since 1.0
 			*/
-			public function query($sql, $filters = null, $fetchMode = self::FETCH_OBJ) : Statement {
+			public function query(string $sql, ?array $filters = null, int $fetchMode = self::FETCH_OBJ) : Statement {
 				try {
 					$this->filters 	 = $filters;
 					$this->statement = null;
@@ -234,7 +234,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			public function fetchRow($table, $criteria = null) {
+			public function fetchRow(string $table, ?array $criteria = null) {
 				$sql = "SELECT * FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
 				return $this->query($sql, $criteria)->fetch();
 			}
@@ -248,7 +248,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			public function fetchCell($table, $column, $criteria = null) {
+			public function fetchCell(string $table, string $column, ?array $criteria = null) {
 				$sql = "SELECT `".$column."` FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
 				return $this->query($sql, $criteria)->fetchColumn(0);
 			}
@@ -257,7 +257,7 @@
 			* Alias of \Database\Connection::fetchCell implemented for the drupal developers sake.
 			* @see \Database\Connection::fetchCell();
 			*/
-			public function fetchField($table, $column, $criteria = null) {
+			public function fetchField(string $table, string $column, ?array $criteria = null) {
 				return $this->fetchCell($table, $column, $criteria);
 			}
 
@@ -271,10 +271,11 @@
 			* @author Allan Thue Rehhoff
 			* @since 2.4
 			*/
-			public function fetchCol($table, $column, $criteria) {
+			public function fetchCol(string $table, string $column, ?array $criteria = null) {
 				$sql = "SELECT `".$column."` FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND");
 				return $this->query($sql, $criteria)->fetchCol();
 			}
+
 			/**
 			* Select rows based on the given criteria
 			* @param (string) $table Name of the table to query
@@ -283,7 +284,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			public function select($table, $criteria = null) {
+			public function select(string $table, ?array $criteria = null) {
 				$sql = "SELECT * FROM ".$table." WHERE ".$this->keysToSql($criteria, "AND");
 				return $this->query($sql, $criteria)->fetchAll();
 			}
@@ -296,7 +297,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			public function insert($table, $variables = null) : int {
+			public function insert(string $table, ?array $variables = null) : int {
 				$variables = ($variables != null) ? $variables : [];
 				$this->createRow("INSERT", $table, $variables);
 
@@ -311,7 +312,7 @@
 			* @return (int) The last inserted ID
 			* @since 1.0
 			*/
-			public function replace($table, $variables) : int {
+			public function replace(string $table, ?array $variables = null) : int {
 				return (int) $this->createRow("REPLACE", $table, $variables)->rowCount();
 			}
 
@@ -324,7 +325,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			public function update($table, $variables, $criteria = null) : int {
+			public function update(string $table, ?array $variables, ?array $criteria = null) : int {
 				$args = [];
 				foreach ($variables as $key => $value) $args["new_".$key] = $value;
 				foreach ($criteria as $key => $value) $args["old_".$key] = $value;
@@ -342,7 +343,7 @@
 			* @since 1.0
 			* @todo Return row count
 			*/
-			public function delete($table, $criteria = null) : int{
+			public function delete(string $table, ?array $criteria = null) : int {
 				$sql = "DELETE FROM `".$table."` WHERE ".$this->keysToSql($criteria, " AND");
 				return $this->query($sql, $criteria)->rowCount();
 			}
@@ -356,7 +357,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			private function createRow($type, $table, $variables) : Statement {
+			private function createRow(string $type, string $table, ?array $variables) : Statement {
 				$binds = [];
 				foreach ($variables as $key => $value) $binds[] = ":$key";
 				$sql = $type. " INTO "."`$table` (" . implode(", ", array_keys($variables)) . ") VALUES (" . implode(", ", $binds) . ")";
@@ -374,7 +375,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			private function keysToSql(&$array, $seperator, $variablePrefix = "") {
+			private function keysToSql(?array &$array, string $seperator, string $variablePrefix = "") : string {
 				if ($array == null) return "1";
 
 				$list = [];
@@ -401,7 +402,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 2.4
 			*/
-			public function debugQuery($query, $filters) : string {
+			public function debugQuery(string $query, array $filters) : string {
 				$this->filters 	 = $filters;
 				$statement = $this->prepare($query);
 
@@ -415,19 +416,19 @@
 			* Wrapper function for debugging purposes
 			* @see Database\Connection::debugQuery()
 			* @param (string) $query A parameterized SQL query
-			* @param (array) $params Parameters for $query
+			* @param (array) $filters Parameters for $query
 			* @return (string)
 			* @author Allan Thue Rehhoff
 			* @since 1.1
 			*/
-			public function interpolateQuery($query, $params) : string {
-				return $this->debugQuery($query, $params);
+			public function interpolateQuery(string $query, array $filters) : string {
+				return $this->debugQuery($query, $filters);
 				/*
 				$keys = [];
-				$values = $params;
+				$values = $filters;
 
-				if(is_array($params)) {
-					foreach ($params as $key => $value) {
+				if(is_array($filters)) {
+					foreach ($filters as $key => $value) {
 						if (is_string($key)) {
 							$keys[] = '/:'.$key.'/';
 						} else {
@@ -452,11 +453,11 @@
 
 			/**
 			* Get the last inserted ID
-			* @return (int)
+			* @return (int) Returns the ID of the last inserted row or sequence value 
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			public function lastInsertId($seqname = null) : int {
+			public function lastInsertId($seqname = null) {
 				return parent::lastInsertId($seqname);
 			}
 		}
