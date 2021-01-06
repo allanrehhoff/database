@@ -1,28 +1,31 @@
-#Changelog#  
-v3.0
+# Changelog #  
+v3.0.1  
+- Updated to use 'use' statements, instead of full path for global namespace classes.
+
+v3.0  
 - Backwards incompatible update
 - Now includes function return types
 - Now includes argument type hints
 - Updated docblocks
 
-v2.4
+v2.4  
 - *This update might not be backwards compatible on all systems, depending on implementation.*  
 - \Database\Connection now extends PHP's PDO class, all the same functions can now be used with a custom statement class.
 - Added a more robust debugQuery(); method.  
 - Updated tests to be compatible with the update.  
 - Updated documentation.  
 
-v2.3
+v2.3  
 - Support for IN operator through query();, update(); and select();  
 - Added a few tests to test the recent changes.  
 
-v2.2 
+v2.2  
 - Entity::__get(); now throws an exception w´hen key field is incorrectly accessed.  
 - Updated documentation blocks.  
 - Datebase\Connection::fetchCell(); now returns null on no results instead of false.  
 - Converted line endings to unix.  
 
-v2.2
+v2.2  
 - Fixed a bug in Connection::fetchCell(); that would make the function always return null.  
 - Updated documentation for Connection::query(); method.  
 - Enforce errors to be thrown as exceptions.  

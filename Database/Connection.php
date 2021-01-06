@@ -7,7 +7,11 @@
 	* @version 2.0
 	*/
 	namespace Database {
-		class Connection extends \PDO {
+		use PDO;
+		use Exception;
+		use PDDException;
+
+		class Connection extends PDO {
 			/**
 			* @var (object) Internal PDO connection
 			*/
@@ -175,7 +179,7 @@
 			* @author Allan Thue Rehhoff
 			* @return Returns a prepared SQL statement, instance of Database\Statement
 			*/
-			public function prepare($sql, $driverOptions = []) : Statement {
+			public function prepare($statement, $driverOptions = []) {
 				if(!empty($this->filters)) {
 					foreach($this->filters as $column => $filter) {
 						if(is_array($filter) === true) {
@@ -188,13 +192,13 @@
 
 							// (:val0, :val1, :val2)
 							$in = "(:".implode(", :", array_keys($tmparr)).')';
-							$sql = str_replace(":".$column, $in, $sql);
+							$statement = str_replace(":".$column, $in, $statement);
 							unset($this->filters[$column]);
 						}
 					}
 				}
 
-				return parent::prepare($sql, $driverOptions);
+				return parent::prepare($statement, $driverOptions);
 			}
 
 			/**

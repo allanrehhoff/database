@@ -1,8 +1,9 @@
 <?php
 	namespace Database {
 		use PDO;
+		use PDOStatement;
 
-		class Statement extends \PDOStatement {
+		class Statement extends PDOStatement {
 			private $_connection;
 
 			protected function __construct(PDO $connection) {

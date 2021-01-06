@@ -4,6 +4,8 @@
 * @author Allan Rehhoff
 */
 namespace Database {
+	use Exception;
+
 	/**
 	* Represents a CRUD'able entity.
 	*/
@@ -73,7 +75,7 @@ namespace Database {
 		*/
 		public function __get(string $name) {
 			if ($name == $this->getKeyField()) {
-				throw new \Exception("Cannot return key field from getter, try calling ".get_called_class()."::id(); in object context instead.");
+				throw new Exception("Cannot return key field from getter, try calling ".get_called_class()."::id(); in object context instead.");
 			}
 
 			return $this->data[$name];
@@ -190,7 +192,7 @@ namespace Database {
 		* @return (array) A filter array
 		* @author Allan Thue Rehhoff
 		*/
-		public function getKeyFilter() {
+		public function getKeyFilter() : array {
 			return [$this->getKeyField() => $this->key];
 		}
 
