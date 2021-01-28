@@ -26,8 +26,6 @@
 		* @author Allan Thue Rehhoff
 		*/
 		public function tearDown() :void {
-			
-			
 			$this->db->query("ALTER TABLE movies AUTO_INCREMENT = 0");
 		}
 
@@ -74,10 +72,10 @@
 		* @author Allan Thue Rehhoff
 		*/
 		public function testUpdateStatement() {
-			$this->db->update("movies", ["movie_name" => time()], ["mid" => 1]);
+			$this->db->update("movies", ["movie_name" => time()], ["mid" => 2]);
 
-			$rowcount = $this->db->update("movies", ["movie_name" => "Star wars"], ["mid" => 1]);
-			$this->assertEquals($rowcount, 1);
+			$rowcount = $this->db->update("movies", ["movie_name" => "Star wars"], ["mid" => 2]);
+			$this->assertEquals(1, $rowcount);
 		}
 
 		/**
@@ -87,6 +85,7 @@
 			$newMovieName = "Exciting new movie";
 
 			$insertId = $this->db->insert("movies", ["movie_name" => "Old boring movie."]);
+
 			$this->assertIsInt($insertId);
 
 			$rowsAffected = $this->db->update("movies", ["movie_name" => $newMovieName], ["mid" => $insertId]);
@@ -104,10 +103,6 @@
 		public function testRollbackInsert() {
 			// Rollbacks doesn't work with MyISAM engines..
 			$this->db->query("ALTER TABLE movies ENGINE = InnoDB");
-			//$checkMyIsam = $this->db->fetchField("information_schema.tables", "ENGINE", ["TABLE_NAME" => "movies"]);
-
-			//if(strtolower($checkMyIsam) == "myisam") {
-			//}
 
 			$latestMovieIdBeforeTransaction = $this->db->query("SELECT mid FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->mid;
 			$start = $this->db->transaction();
@@ -194,7 +189,7 @@
 		* @author Allan Thue Rehhoff
 		*/
 		public function testSelectSingleRowFromParameters() {
-			$res = $this->db->fetchRow("movies", ["mid" => 1, "movie_name" => "Star wars"]);
+			$res = $this->db->fetchRow("movies", ["movie_name" => "Star wars"]);
 			$this->assertIsObject($res);
 
 			$res = $this->db->fetchRow("movies", ["mid" => time()]);
@@ -206,7 +201,7 @@
 		*/
 		public function testFetchSingleCellValueFromParameters() {
 			$res = $this->db->fetchCell("movies", "movie_name", ["mid" => 1]);
-			$this->assertEquals("Star wars", $res);
+			$this->assertEquals("test", $res);
 		}
 
 		/**

@@ -1,12 +1,13 @@
 # Changelog #  
-v3.0.1  
-- Updated to use 'use' statements, instead of full path for global namespace classes.
-
 v3.0  
+- Updated to use 'use' statements, instead of full path for global namespace classes.
 - Backwards incompatible update
 - Now includes function return types
 - Now includes argument type hints
 - Updated docblocks
+- Added a new ->connect(); method to the Database object
+- Updated tests to match the new structure
+- Moved from extending PDO to a single contained PDO property
 
 v2.4  
 - *This update might not be backwards compatible on all systems, depending on implementation.*  
