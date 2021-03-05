@@ -331,15 +331,17 @@
 			}
 
 			/**
-			* Inserts a new row in the given table.
-			* Already existing rows with matching PRIMARY key or UNIQUE index are deleted prior to inserting.
+			* Replaces a new row into the given table.
+			* Already existing rows with matching PRIMARY key or UNIQUE index are deleted and then re-inserted.
 			* @param (string) $table Name of the table to replace into
 			* @param (array) $variables Column => Value pairs to be inserted
 			* @return (int) The last inserted ID
 			* @since 1.0
 			*/
 			public function replace(string $table, ?array $variables = null) : int {
-				return (int) $this->createRow("REPLACE", $table, $variables)->rowCount();
+				$variables = ($variables != null) ? $variables : [];
+				$this->createRow("REPLACE", $table, $variables);
+				return (int) $this->dbh->lastInsertId();
 			}
 
 			/**

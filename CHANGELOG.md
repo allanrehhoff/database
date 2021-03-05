@@ -1,4 +1,11 @@
 # Changelog #  
+v3.1.0  
+- Updated Connection::replace(); method.  
+- Introduced new Entity::isNew(); method.  
+
+v3.0.1  
+- Added Entity::exists() method to determine if entity exists.  
+
 v3.0  
 - Updated to use 'use' statements, instead of full path for global namespace classes.
 - Backwards incompatible update
