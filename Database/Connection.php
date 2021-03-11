@@ -447,32 +447,6 @@
 			*/
 			public function interpolateQuery(string $query, array $filters) : string {
 				return $this->debugQuery($query, $filters);
-				/*
-				$keys = [];
-				$values = $filters;
-
-				if(is_array($filters)) {
-					foreach ($filters as $key => $value) {
-						if (is_string($key)) {
-							$keys[] = '/:'.$key.'/';
-						} else {
-							$keys[] = '/[?]/';
-						}
-
-						if (is_string($value)) {
-							$values[$key] = "'" . $value . "'";
-						}
-
-				        if (is_array($value)) {
-							$values[$key] = "('" . implode("','", $value) . "')";
-						} else if (is_null($value)) {
-							$values[$key] = "NULL";
-						}
-					}
-				}
-
-				return preg_replace($keys, $values, $query, 1, $count);
-				*/
 			}
 
 			/**
@@ -481,7 +455,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			public function lastInsertId($seqname = null) {
+			public function lastInsertId($seqname = null) : int {
 				return $this->dbh->lastInsertId($seqname);
 			}
 		}
