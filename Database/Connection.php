@@ -13,11 +13,6 @@
 
 		class Connection {
 			/**
-			* @var (object) Internal PDO connection
-			*/
-			private $_connection;
-
-			/**
 			* @var (boolean) True if a transaction has started, false otherwise.
 			*/
 			private $transactionStarted = false;
@@ -52,7 +47,6 @@
 			*/
 			public $lastQuery;
 
-
 			/**
 			* Initiate a new database connection through PDO.
 			* @param (string) $hostname Hostname to connect to
@@ -65,7 +59,7 @@
 			*/
 			public function __construct(string $hostname, string $username, string $password, string $database) {
 				if (extension_loaded("pdo") === false) {
-					throw new Exception("Oh god! PDO does not appear to be enabled for this server.");
+					throw new Exception("PDO does not appear to be enabled for this server.");
 				}
 
 				$this->connect($hostname, $username, $password, $database);
@@ -106,11 +100,13 @@
 			* @return (void)
 			* @since 3.0
 			*/
-			public function connect(string $hostname, string $username, string $password, string $database) {
+			public function connect(string $hostname, string $username, string $password, string $database) : Connection {
 				$this->dbh = new PDO("mysql:host=".$hostname.";dbname=".$database, $username, $password);
 				$this->dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 				$this->dbh->setAttribute(PDO::ATTR_STATEMENT_CLASS, ["Database\Statement", [$this]]);
 				$this->dbh->query("SET NAMES utf8mb4");
+
+				return $this;
 			}
 
 			/**
