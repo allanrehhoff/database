@@ -249,6 +249,28 @@
 			}
 
 			/**
+			* Count total number rows in a column
+			* @return int
+			*/
+			public function count(string $table, string $column, ?array $criteria = null) : int {
+				$sql = "SELECT COUNT(`".$column."`) AS total FROM `".$table."`";
+				if($criteria != null) {
+					$sql .= ' WHERE ' . $this->keysToSql($criteria, 'AND');
+				}
+
+				return (int)$this->query($sql, $criteria)->fetch()->total;
+			}
+
+			/**
+			 * Count the results of a query
+			 * @return int
+			 */
+			public function countQuery(string $query, array $criteria = []) : int {
+				$result = $this->query($query, $criteria);
+				return (int)$result->rowCount();
+			}
+
+			/**
 			* Fetch a single row from the given criteria.
 			* Rows are not ordered, make sure your criteria matches the desired row.
 			* @param (string) $table Name of the table containing the row to be fetched
@@ -404,7 +426,9 @@
 
 				$list = [];
 				foreach ($array as $column => $value) {
-					if(is_array($value)) {
+					if($value === null) {
+						$operator = "<=>";
+					} else if(is_array($value)) {
 						$operator = "IN";
 					} else {
 						$operator = '=';

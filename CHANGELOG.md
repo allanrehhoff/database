@@ -1,4 +1,8 @@
 # Changelog #  
+v3.1.1  
+- Added two new methods for counting queries Connection::count(); and Connection::countQuery();
+- Added support for selecting by null values
+
 v3.1.0  
 - Updated Connection::replace(); method.  
 - Introduced new Entity::isNew(); method.  
