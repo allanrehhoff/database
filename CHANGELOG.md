@@ -1,4 +1,8 @@
 # Changelog #  
+v3.1.2
+- Fixed naming convention of a variables  
+- Fixed missing curly bracket  
+
 v3.1.1  
 - Added two new methods for counting queries Connection::count(); and Connection::countQuery();
 - Added support for selecting by null values
