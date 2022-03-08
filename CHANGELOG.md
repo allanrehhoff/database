@@ -1,4 +1,9 @@
 # Changelog #  
+v3.2.0
+- Added LIKE search method.  
+- Added upsert(); methods, for updating on duplicate key.  
+- Support setting key field in Entity::set();  
+
 v3.1.2
 - Fixed naming convention of a variables  
 - Fixed missing curly bracket  
