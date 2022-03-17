@@ -1,4 +1,8 @@
 # Changelog #  
+v3.2.1
+- Rewritten Database::upsert(); method for future compatibility with multi-inserts.  
+- Fixed PDO Param values being interpreted as \PDO::PARAM_STR.  
+
 v3.2.0
 - Added LIKE search method.  
 - Added upsert(); methods, for updating on duplicate key.  
