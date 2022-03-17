@@ -139,6 +139,66 @@
 			$this->idsToDeleteInOurMovies[] = $insertId;
 		}
 
+		public function testOnDuplicateKeyUpdate() {
+			$initVal = bin2hex(random_bytes(16));
+
+			$this->db->upsert("test_table", [
+				"test_id" => 110,
+				"varchar_col" => $initVal
+			]);
+
+			$this->db->upsert("test_table", [
+				"test_id" => 110,
+				"varchar_col" => "newVal"
+			]);
+			
+			$newVal = $this->db->fetchField("test_table", "varchar_col", ["test_id" => 110]);
+
+			$this->assertNotEquals($newVal, $initVal);
+			$this->assertEquals($newVal, "newVal");
+		}
+
+		/**
+		 * @author Allan Thue Rehhoff
+		 */
+		public function testSelectNullValue() {
+			foreach(["test1", "test2", "test3", null, null] as $val) {
+				$this->db->insert("test_table", ["varchar_col" => $val]);
+			}
+
+			$res = $this->db->count("test_table", "test_id", ["varchar_col" => null]);
+
+			$this->assertEquals($res, 2);
+		}
+
+		/**
+		 * @author Allan Thue Rehhoff
+		 */
+		public function testSelectIntegers() {
+			foreach([2, 2, 2, null, null, "string", "anotherstring"] as $val) {
+				$this->db->insert("test_table", ["varchar_col" => $val]);
+			}
+
+			$res = $this->db->count("test_table", "test_id", ["varchar_col" => 2]);
+
+			$this->assertEquals($res, 3);
+		}
+
+		/**
+		 * @author Allan Thue Rehhoff
+		 */
+		public function testSelectBooleans() {
+			foreach([true, false] as $val) {
+				$this->db->insert("test_table", ["varchar_col" => $val]);
+			}
+
+			$true = $this->db->count("test_table", "test_id", ["varchar_col" => true]);
+			$false = $this->db->count("test_table", "test_id", ["varchar_col" => false]);
+
+			$this->assertEquals($true, 1);
+			$this->assertEquals($false, 1);
+		}
+
 		/**
 		* @author Allan Thue Rehhoff
 		*/
