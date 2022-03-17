@@ -24,7 +24,7 @@ With the exception of the \Database\Connection::query(); method, this has been o
 If all you want to do, is a simple parameterized query, this line is the one you're looking for.  
 This will return a custom statement class of \Database\Statement, which also extends the default PDOStatement class.  
 
-```
+```php
 <?php \Database\Connection::getInstance()->query("UPDATE animals SET `extinct` = :value WHERE name = :name", ["value" => true, "name" => "Asian Rhino"]); ?>
 ```   
 
@@ -35,7 +35,7 @@ Second argument for methods, insert(), update() and delete() is always the WHERE
 
 The following queries:  
 
-```
+```php
 <?php \Database\Connection::getInstance()->select("animals"); ?>
 
 <?php \Database\Connection::getInstance()->select("animals", ["name" => "Asian Rhino"]]); ?>
@@ -45,11 +45,11 @@ Will both return an array of objects, if the given criterias matched any rows, o
 
 This method also supports IN-like requests.
 
-```
+```php
 <?php \Database\Connection::getInstance()->select("animals", ["name" => ["Asian Rhino", "Platypus"]]); ?>
 ```
   
-```
+```php
 <?php \Database\Connection::getInstance()->update("animals", ["extinct" => true], ["name" => "Asian Rhino"]); ?>
 ```
 
@@ -68,7 +68,7 @@ This will allow you to call **->save();** on an object and thus saving the data 
 The data object will be saved as a new row if the primary_key key parameter was not present upon instantiating. 
 
 **File:** Animal.php  
-```
+```php
 <?php
 	class Animal extends Entity {
 		protected function getKeyField() { return "animal_id"; } // The column with your primary key index
@@ -85,7 +85,7 @@ The data object will be saved as a new row if the primary_key key parameter was 
 ```
 
 You can now select a row presented as an object by it's primary key.
-```
+```php
 <?php
 if(isset($_GET["animalID"])) {
 	$iAnimal = new Animal($_GET["animalID"]);
@@ -96,7 +96,7 @@ if(isset($_GET["animalID"])) {
 
 Objects can also be populated with new data, while still updating the row.  
 
-```
+```php
 <?php
 $iAnimal = new Animal([
 	"animalID" => 42,
@@ -120,12 +120,12 @@ This will update animalID #42 setting extinct to '0'
 There's a slew of available helper functions that you can use to fetch resultsets in various ways, instead of doping the query, and then call fetch.
 
 For example:  
-```
+```php
 <?php \Database\Connection::getInstance()->query("SELECT name FROM animals WHERE extinct = :extinct", ["extinct" => true)->fetchCol(); ?>
 ```
 
 Could be rewritten to:
-```
+```php
 <?php \Database\Connection::getInstance()->fetchCol("animals", "name", ["extinct" => true]); ?>
 ```
 
