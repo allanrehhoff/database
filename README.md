@@ -1,31 +1,13 @@
-#DatabaseConnection class#
+#Database\Connection class#
 _By Allan Rehhoff_
 
-This repository contains a class for querying your database in an efficient way and object oriented way.  
-It also features a few classes to speed up CMS / CRUD development, and abstracts away your database queries.  
+A library for querying your database in an easy-to-maintain objected oriented manner.  
+It features a few classes to speed up CMS / MVC / API and general CRUD development, and abstracts away your database queries.  
 
-Simply copy the EntityType class to a new file and rename it accordingly.
-
-**File:** Animal.php  
-```
-<?php
-	class Animal extends Entity {
-		protected function getKeyField() { return "animal_id"; } // The column with your primary key index
-		protected function getTableName() { return "animals"; } // Name of the table to work with
-
-		/**
-		* Develop whatever functions your might need below.
-		*/
-		public function myFunction() {
-
-		}
-	}
-?> 
-```
+If you're not much for reading documentation, this snippet is for you.  
+Or simply scroll down to the examples.  
  
 ##Installing##
-
-Install with composer: ```composer require rehhoff/database```
 
 Install manually: ```<?php require "path/to/vendor/dir/database/autoload.php"; ?>```
 
@@ -71,6 +53,69 @@ This method also supports IN-like requests.
 <?php \Database\Connection::getInstance()->update("animals", ["extinct" => true], ["name" => "Asian Rhino"]); ?>
 ```
 
+##Database Entities##
+For easier data manipulation, data objects should extend the **\Database\Entity** class.  
+Every class that extends **\Database\DBObject** must implement the following methods.  
+
+- getTableName(); // Table in which this data object should store data.  
+- getKeyField(); // The primary key of the table in which this object stores data.  
+
+Every data object take an optional parameter [(int) primary_key] upon instantiating,  
+identifying whether a new data object should be instantiated or an already existing row should be loaded from the table.  
+
+If you wish to change data use the **->set(array('column' => 'value'));**  
+This will allow you to call **->save();** on an object and thus saving the data to your database.  
+The data object will be saved as a new row if the primary_key key parameter was not present upon instantiating. 
+
+**File:** Animal.php  
+```
+<?php
+	class Animal extends Entity {
+		protected function getKeyField() { return "animal_id"; } // The column with your primary key index
+		protected function getTableName() { return "animals"; } // Name of the table to work with
+
+		/**
+		* Develop whatever functions your might need below.
+		*/
+		public function myCustomFunction() {
+
+		}
+	}
+?> 
+```
+
+You can now select a row presented as an object by it's primary key.
+```
+<?php
+if(isset($_GET["animalID"])) {
+	$iAnimal = new Animal($_GET["animalID"]);
+} else {
+	$iAnimal = new Animal();
+}
+```
+
+Objects can also be populated with new data, while still updating the row.  
+
+```
+<?php
+$iAnimal = new Animal([
+	"animalID" => 42,
+	"extinct" => false
+]);
+$iAnimal->save();
+
+// ... or
+
+$iAnimal = new Animal;
+$iAnimal->set([
+	"animalID" => 42,
+	"extinct" => false
+]);
+$iAnimal->save();
+```
+
+This will update animalID #42 setting extinct to '0'
+
 ###A helping hand (wrapper and helper functions)###
 There's a slew of available helper functions that you can use to fetch resultsets in various ways, instead of doping the query, and then call fetch.
 
@@ -92,19 +137,6 @@ Other helper functions include
 The helping hand, is not limited to selective queries only.
 - \Database\Connection::delete();  
 - \Database\Connection::update();  
+- \Database\Connection::upsert();  
 - \Database\Connection::replace();  
 - \Database\Connection::transaction();  
-
-##Database Entities##
-For easier data manipulation, data objects should extend the **\Database\Entity** class.  
-Every class that extends **\Database\DBObject** must implement the following methods.  
-
-- getTableName(); // Table in which this data object should store data.  
-- getKeyField(); // The primary key of the table in which this object stores data.  
-
-Every data object take an optional parameter [(int) primary_key] upon instantiating,  
-identifying whether a new data object should be instantiated or an already existing row should be loaded from the table.  
-
-If you wish to change data use the **->set(array('column' => 'value'));**  
-This will allow you to call **->save();** on an object and thus saving the data to your database.  
-The data object will be saved as a new row if the primary_key key parameter was not present upon instantiating. 
