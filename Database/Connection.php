@@ -192,18 +192,20 @@
 			}
 
 			/**
-			* Wrapper around PDO::prepare(); to provide support for the IN keyword.
+			* Overloads PDO::prepare(); to provide support for additional checks and functionality.
 			* @param string $sql The parameterized SQL string to query against the database
 			* @param array $driverOptions Arguments to pass along with the query
 			* @since 2.3
 			* @author Allan Thue Rehhoff
 			* @return Database\Statement Returns a prepared SQL statement, instance of Database\Statement
 			*/
-			public function prepare($statement, $driverOptions = []) {
+			public function prepare(string $sql, array $driverOptions = []) : Statement {
+				// if a filter value is an array we'll create an IN syntax
 				if(!empty($this->filters)) {
 					foreach($this->filters as $column => $filter) {
 						if(is_array($filter) === true) {
 							$tmparr = [];
+
 							foreach ($filter as $i => $item) {
 								$key = "val".$i;
 								$tmparr[$key]  = $item;
@@ -212,13 +214,38 @@
 
 							// (:val0, :val1, :val2)
 							$in = "(:".implode(", :", array_keys($tmparr)).')';
-							$statement = str_replace(":".$column, $in, $statement);
+							$sql = str_replace(":".$column, $in, $sql);
 							unset($this->filters[$column]);
 						}
 					}
 				}
 
-				return $this->dbh->prepare($statement, $driverOptions);
+				$statement = $this->dbh->prepare($sql, $driverOptions);
+
+				// Simply passing $this->filters to PDO::execute();
+				// will treat all parameter values as PDO::PARAM_STR
+				// resulting in errors when passing int or NULL as values
+				if(!empty($this->filters)) {
+					foreach($this->filters as $param => $value) {
+						$type = gettype($value);
+
+						if($type == "NULL") {
+							$statement->bindValue($param, $value, PDO::PARAM_NULL);
+						} else if($type == "boolean") {
+							$statement->bindValue($param, $value, PDO::PARAM_STR);
+						} else if($type == "integer") {
+							$statement->bindValue($param, $value, PDO::PARAM_INT);
+						} else if($type == "double") {
+							$statement->bindValue($param, $value, PDO::PARAM_STR);
+						} else if($type == "string") {
+							$statement->bindValue($param, $value, PDO::PARAM_STR);
+						} else {
+							$statement->bindValue($param, $value);
+						}
+					}
+				}
+
+				return $statement;
 			}
 
 			/**
@@ -234,9 +261,10 @@
 			public function query(string $sql, ?array $filters = null, int $fetchMode = PDO::FETCH_OBJ) : Statement {
 				try {
 					$this->filters 	 = $filters;
+
 					$this->statement = null;
 					$this->statement = $this->prepare($sql);
-					$this->statement->execute($this->filters);
+					$this->statement->execute();
 					$this->statement->setFetchMode($fetchMode);
 					$this->queryCount++;
 				} catch(PDOException $exception) {
@@ -388,10 +416,12 @@
 			 * @param ?array $criteria Criteria columns, e.g. columns with unique indexes
 			 * @return int Number of rows affected
 			 */
-			public function upsert(string $table, ?array $variables = null, array $criteria = null) : Statement {
-				$args = array_merge($criteria, $variables);
-				$sql = $this->createRowSql("INSERT", $table, $args) . " ON DUPLICATE KEY UPDATE " . $this->keysToSql(array_diff_key($variables, $criteria), ', ');
-				return $this->query($sql, $args);
+			public function upsert(string $table, ?array $variables = null) : Statement {
+				$updates = [];
+				foreach($variables as $column => $value) $updates[] = '`' . $column . '` = VALUES(' . $column . ')';
+				$sql = $this->createRowSql("INSERT", $table, $variables) . " ON DUPLICATE KEY UPDATE " . implode(', ', $updates);
+
+				return $this->query($sql, $variables);
 			}
 
 			/**
@@ -440,7 +470,10 @@
 				$binds = [];
 				$variables = $variables ?? [];
 
-				foreach ($variables as $key => $value) $binds[] = ":$key";
+				foreach ($variables as $key => $value) {
+					$binds[] = ":".$key;
+				}
+
 				$sql = $type . " INTO "."`$table` (`" . implode("`, `", array_keys($variables)) . "`) VALUES (" . implode(", ", $binds) . ")";
 
 				return $sql;
