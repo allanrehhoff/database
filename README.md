@@ -70,7 +70,7 @@ The data object will be saved as a new row if the primary_key key parameter was 
 **File:** Animal.php  
 ```php
 <?php
-	class Animal extends Entity {
+	class Animal extends Database\Entity {
 		protected function getKeyField() { return "animal_id"; } // The column with your primary key index
 		protected function getTableName() { return "animals"; } // Name of the table to work with
 
