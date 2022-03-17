@@ -282,6 +282,7 @@
 			*/
 			public function count(string $table, string $column, ?array $criteria = null) : int {
 				$sql = "SELECT COUNT(`".$column."`) AS total FROM `".$table."`";
+
 				if($criteria != null) {
 					$sql .= ' WHERE ' . $this->keysToSql($criteria, 'AND');
 				}
@@ -307,7 +308,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			public function fetchRow(string $table, ?array $criteria = null) {
+			public function fetchRow(string $table, ?array $criteria = null) : \stdClass {
 				$sql = "SELECT * FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
 				return $this->query($sql, $criteria)->fetch();
 			}
@@ -349,7 +350,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 2.4
 			*/
-			public function fetchCol(string $table, string $column, ?array $criteria = null) {
+			public function fetchCol(string $table, string $column, ?array $criteria = null) : array {
 				$sql = "SELECT `".$column."` FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND");
 				return $this->query($sql, $criteria)->fetchCol();
 			}
@@ -362,7 +363,7 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			public function select(string $table, ?array $criteria = null) {
+			public function select(string $table, ?array $criteria = null) : array {
 				$sql = "SELECT * FROM ".$table." WHERE ".$this->keysToSql($criteria, "AND");
 				return $this->query($sql, $criteria)->fetchAll();
 			}
