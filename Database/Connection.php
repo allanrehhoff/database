@@ -4,7 +4,7 @@
 	* Easily perform SQL queries without writing (more than neccesary) SQL.
 	* Credits to Mikkel Jensen & Victoria Hansen from whom I in cold blood have undeterred copied some of this code from.
 	* @author Allan Thue Rehhoff
-	* @version 2.0
+	* @version 3.2.1
 	*/
 	namespace Database {
 		use \PDO;
@@ -13,7 +13,7 @@
 
 		class Connection {
 			/**
-			* @var boolea) True if a transaction has started, false otherwise.
+			* @var boolean True if a transaction has started, false otherwise.
 			*/
 			private $transactionStarted = false;
 
@@ -415,6 +415,7 @@
 			 * @param ?array $variables column => value pairs to insert/update
 			 * @param ?array $criteria Criteria columns, e.g. columns with unique indexes
 			 * @return int Number of rows affected
+			 * @since 3.2.0
 			 */
 			public function upsert(string $table, ?array $variables = null) : Statement {
 				$updates = [];
