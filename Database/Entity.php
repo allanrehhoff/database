@@ -196,7 +196,7 @@ namespace Database {
 		* @author Allan Thue Rehhoff
 		*/
 		public function getKey() {
-			return $this->key;
+			return $this->id();
 		}
 
 		/**
