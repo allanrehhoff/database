@@ -48,7 +48,7 @@
 			public $lastQuery;
 
 			/**
-			* Initiate a new database connection through PDO.
+			* Initiate a new database connection using PDO as a driver.
 			* @param string $hostname Hostname to connect to
 			* @param string $username Username to use for authentication
 			* @param string $password Password to use for authentication
@@ -97,7 +97,7 @@
 			* @param string $username Username to use for authentication
 			* @param string $password Password to use for authentication
 			* @param string $database Name of the database to use
-			* @return (void)
+			* @return void
 			* @since 3.0
 			*/
 			public function connect(string $hostname, string $username, string $password, string $database) : Connection {
@@ -278,6 +278,7 @@
 
 			/**
 			* Count total number rows in a column
+			* @todo Find out if this can be replaced by countQuery();
 			* @return int
 			*/
 			public function count(string $table, string $column, ?array $criteria = null) : int {
@@ -292,7 +293,9 @@
 
 			/**
 			 * Count the results of a query
-			 * @return int
+			 * @param string $query the parameterized query
+			 * @param array $criteria Key value pairs to use with the query
+			 * @return int Row coutn
 			 */
 			public function countQuery(string $query, array $criteria = []) : int {
 				$result = $this->query($query, $criteria);
@@ -308,9 +311,10 @@
 			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
-			public function fetchRow(string $table, ?array $criteria = null) : \stdClass {
+			public function fetchRow(string $table, ?array $criteria = null) : ?\stdClass {
 				$sql = "SELECT * FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
-				return $this->query($sql, $criteria)->fetch();
+				$row = $this->query($sql, $criteria)->fetch();
+				return  $row !== false ? $row : null;
 			}
 
 			/**
@@ -342,17 +346,21 @@
 
 			/**
 			* Fetches a column of values from the given table.
+			* This function will always return an array.
 			* @param string $table Name of the table containing the rows to be fetched
 			* @param string $column Column name in $table where value should be returned from.
 			* @param array $criteria Criteria used to filter the rows.
-			* @return mixed Returns an array containing all the rows matching in the resultset,
-			* 				  An empty array is returned if there are zero results to fetch, or FALSE on failure.
+			* @return array Returns an array containing all the rows matching in the resultset
 			* @author Allan Thue Rehhoff
 			* @since 2.4
 			*/
 			public function fetchCol(string $table, string $column, ?array $criteria = null) : array {
 				$sql = "SELECT `".$column."` FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND");
-				return $this->query($sql, $criteria)->fetchCol();
+				$result = $this->query($sql, $criteria)->fetchCol();
+
+				// PHP < 8.0.0 compat. PDOStatement::fetchAll(); will return false
+				// if the result set was empty, fixed in PHP 8.0.0
+				return $result !== false ? $result : [];
 			}
 
 			/**
@@ -411,7 +419,7 @@
 			}
 
 			/**
-			 * Update or insert row
+			 * Update or insert row, uses ON DUPLICATE KEY syntax
 			 * @param $table Table to update or insert again
 			 * @param ?array $variables column => value pairs to insert/update
 			 * @param ?array $criteria Criteria columns, e.g. columns with unique indexes
@@ -449,10 +457,10 @@
 			* Delete rows from the given table by criteria.
 			* @param string $table Table to delete rows from
 			* @param array $criteria Criteria for deletion
-			* @author Allan Thue Rehhoff
 			* @return int Number of rows affected.
+			* @author Allan Thue Rehhoff
 			* @since 1.0
-			* @todo Return row count
+			* @todo Return affected row count
 			*/
 			public function delete(string $table, ?array $criteria = null) : int {
 				$sql = "DELETE FROM `".$table."` WHERE ".$this->keysToSql($criteria, " AND");
@@ -469,7 +477,7 @@
 			* @since 1.0
 			*/
 			private function createRowSql(string $type, string $table, ?array $variables = null) : string {
-				$binds = [];
+					$binds = [];
 				$variables = $variables ?? [];
 
 				foreach ($variables as $key => $value) {
