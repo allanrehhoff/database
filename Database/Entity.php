@@ -214,7 +214,7 @@ namespace Database {
 		* @author Allan Thue Rehhoff
 		*/
 		public function id() {
-			return $this->key;
+			return is_numeric($key) ? $this->key : $this->safe($this->getKeyField());
 		}
 
 		/**
