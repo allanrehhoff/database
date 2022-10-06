@@ -66,6 +66,7 @@ namespace Database {
 
 		/**
 		* Saves the entity to a long term storage.
+		* Empty strings are converted to null values
 		* @author Allan Thue Rehhoff
 		* @return mixed if a new entity was just inserted, returns the primary key for that entity, otherwise the current data is returned
 		*/
@@ -75,6 +76,7 @@ namespace Database {
 					Connection::getInstance()->update($this->getTableName(), $this->data, $this->getKeyFilter());
 					return $this->data;
 				} else {
+					if(empty($this->data)) throw new Exception("Data variable is empty");
 					$this->key = Connection::getInstance()->insert($this->getTableName(), $this->data);
 					return $this->key;
 				}
@@ -89,7 +91,7 @@ namespace Database {
 		public function upsert() {
 			return Connection::getInstance()->upsert($this->getTableName(), $this->data, $this->getKeyFilter());
 		}
-		
+
 		/**
 		* Permanently delete a given entity row
 		* @author Allan Thue Rehhoff
@@ -101,28 +103,35 @@ namespace Database {
 
 		/**
 		* Make a given value safe for insertion, could prevent future XSS injections
-		* @author Allan Thue Rehhoff
 		* @param string Key of the data value to retrieve
 		* @return string a html friendly string
+		* @author Allan Thue Rehhoff
 		*/
-		public function safe(string $key) : string {
-			return htmlspecialchars($this->data[$key], ENT_QUOTES, "UTF-8");
+		public function safe(string $key) : ?string {
+			$data = $this->get($key);
+
+			if($data === null) return null;
+
+			return htmlspecialchars($data, ENT_QUOTES, "UTF-8");
 		}
 
 		/**
 		* Load one or more ID's into entities
-		* @todo Take this out of a static context
 		* @param mixed $ids an array of ID's or an integer to load
+		* @param bool $indexByIDs If loading multiple ID's set this to true, to index the resulting array by entity IDs
 		* @return mixed The loaded entities
 		* @throws Exception
 		* @author Allan Thue Rehhoff
 		*/
-		public static function load($ids) {
+		public static function load($ids, bool $indexByIDs = true) {
 			$class = get_called_class();
 
 			if(is_array($ids)) {
 				$objects = [];
-				foreach($ids as $id) $objects[] = new $class($id);
+				foreach($ids as $i => $id) {
+					$index = $indexByIDs ? $id : $i;
+					$objects[$index] = new $class($id);
+				}
 				return $objects;
 			} else if(is_numeric($ids)) {
 				return new $class((int) $ids);
@@ -141,6 +150,20 @@ namespace Database {
 		public function set($data = null, ?array $allowedFields = null) : Entity {
 			if(is_object($data) === true) {
 				$data = (array) $data;
+			}
+
+			if(is_array($data) === true) {
+				// Find empty strings in dataset and convert to null instead.
+				// JSON fields doesn't allow empty strings to be stored.
+				// This also helps against empty strings telling exists(); to return true
+				foreach($data as $key => $value) {
+					$data[$key] = is_string($value) && trim($value) === '' ? null : $value;
+				}
+			}
+
+			// Again empty strings should be null
+			if(is_string($data) && trim($data) === '') {
+				$data = null;
 			}
 
 			if ($allowedFields != null) {
@@ -187,7 +210,21 @@ namespace Database {
 		* @author Allan Thue Rehhoff
 		*/
 		public function get(string $key) {
-			return isset($this->data[$key]) ? $this->data[$key] : false;
+			return $this->data[$key] ?? null;
+		}
+
+		/**
+		 * Get and shift a value off the data array
+		 * @param string $key key name of the value to retrieve
+		 */
+		public function shift(string $key) {
+			$data = $this->get($key);
+
+			if(isset($this->data[$key])) {
+				unset($this->data[$key]);
+			}
+
+			return $data;
 		}
 
 		/**
@@ -196,7 +233,7 @@ namespace Database {
 		* @author Allan Thue Rehhoff
 		*/
 		public function getKey() {
-			return $this->id();
+			return $this->key;
 		}
 
 		/**
@@ -214,7 +251,7 @@ namespace Database {
 		* @author Allan Thue Rehhoff
 		*/
 		public function id() {
-			return is_numeric($key) ? $this->key : $this->safe($this->getKeyField());
+			return is_numeric($this->key) ? $this->key : $this->safe($this->getKeyField());
 		}
 
 		/**
