@@ -391,6 +391,31 @@
 			}
 
 			/**
+			 * @todo Needs implementation
+			 */
+			public function insertMultiple(string $table, ?array $variables = null) : Statement {
+				$binds = [];
+				$values = [];
+
+				foreach($variables as $i => $row) {
+					$keys = [];
+
+					foreach($row as $cell => $value) {
+						$index = $cell . '_' . $i;
+
+						$keys[] = ':' . $index;
+						$values[$index] = $value;
+					}
+
+					$binds[] = implode(', ', $keys);
+				}
+
+				$sql = "INSERT INTO "."`$table` (`" . implode("`, `", array_keys($variables[0])) . "`) VALUES (" . implode("), (", $binds) . ")";
+
+				return $this->query($sql, $values);
+			}
+
+			/**
 			* Inserts a row in the given table.
 			* @param string $table Name of the table to insert the row in
 			* @param array $variables Column => Value pairs to be inserted
@@ -477,7 +502,7 @@
 			* @since 1.0
 			*/
 			private function createRowSql(string $type, string $table, ?array $variables = null) : string {
-					$binds = [];
+				$binds = [];
 				$variables = $variables ?? [];
 
 				foreach ($variables as $key => $value) {
@@ -535,7 +560,23 @@
 				$statement = $this->prepare($query);
 
 				$tmpFilters = [];
-				foreach ($this->filters as $column => $value) $tmpFilters[":".$column] = "'".$value."'";
+				foreach ($this->filters as $column => $value) {
+					if(substr($column, 0, 1) !== ':') {
+						$arg = ":".$column;
+					} else {
+						$arg = $column;
+					}
+
+					$type = gettype($value);
+
+					if($type == "string") {
+						$value = "'".$value."'";
+					} else if($type == "boolean") {
+						$value = $value ? 1 : 0;
+					}
+
+					$tmpFilters[$arg] = $value;
+				}
 
 				return strtr($statement->queryString, $tmpFilters);
 			}
