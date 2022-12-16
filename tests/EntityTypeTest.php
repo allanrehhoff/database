@@ -151,6 +151,6 @@
 
 			$this->assertEquals(count($result), 5);
 
-			$this->assertInstanceOf(Database\EntityType::class, current($result));
+			$this->assertInstanceOf(Database\EntityType::class, $result->getFirst());
 		}
 	}
