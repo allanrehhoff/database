@@ -46,13 +46,36 @@
 			$this->idsToDeleteInOurMovies[] = $insertId;
 		}
 
+		public function testInsertMultipleRows() {
+			$date = date("Y-m-d h:i:s");
+
+			$data = [
+				[
+					"movie_name" => "Movie 1",
+					"added" => $date,
+				],
+				[
+					"movie_name" => "Movie 2",
+					"added" => $date,
+				],
+				[
+					"movie_name" => "Movie 3",
+					"added" => $date,
+				]
+			];
+
+			$numInserted = $this->db->insertMultiple("movies", $data)->rowCount();
+
+			$this->assertEquals(count($data), $numInserted);
+		}
+
 		/**
 		* @author Allan Thue Rehhoff
 		*/
 		public function testReplaceRowWithExistingPrimaryKey() {
 			$insertId = $this->db->insert("movies", ["movie_name" => "test", "added" => date("Y-m-d h:i:s")]);
 
-			$this->db->replace("movies", ["mid" => $insertId, "movie_name" => "test2"]);
+			$this->db->replace("movies", ["mid" => $insertId, "movie_name" => "test2", "added" => date("Y-m-d h:i:s")]);
 			$movieName = $this->db->fetchCell("movies", "movie_name", ["mid" => $insertId]);
 			$this->assertEquals("test2", $movieName);
 
@@ -84,7 +107,7 @@
 		public function testInsertAndUpdateSingleRow() {
 			$newMovieName = "Exciting new movie";
 
-			$insertId = $this->db->insert("movies", ["movie_name" => "Old boring movie."]);
+			$insertId = $this->db->insert("movies", ["movie_name" => "Old boring movie.", "added" => date("Y-m-d h:i:s")]);
 
 			$this->assertIsInt($insertId);
 
@@ -127,7 +150,7 @@
 			$this->assertTrue($start);
 
 			$latestMovieNameBeforeCommit = $this->db->query("SELECT movie_name FROM movies ORDER BY mid DESC LIMIT 1")->fetch()->movie_name;
-			$insertId = $this->db->insert("movies", ["movie_name" => $newMovieName]);
+			$insertId = $this->db->insert("movies", ["movie_name" => $newMovieName, "added" => date("Y-m-d h:i:s")]);
 
 			$commit = $this->db->commit();
 			$this->assertTrue($commit);
@@ -144,12 +167,16 @@
 
 			$this->db->upsert("test_table", [
 				"test_id" => 110,
-				"varchar_col" => $initVal
+				"varchar_col" => $initVal,
+				"text_col" => "lorem ipsum",
+				"datetime_col" => date("Y-m-d h:i:s")
 			]);
 
 			$this->db->upsert("test_table", [
 				"test_id" => 110,
-				"varchar_col" => "newVal"
+				"varchar_col" => "newVal",
+				"text_col" => "lorem ipsum",
+				"datetime_col" => date("Y-m-d h:i:s")
 			]);
 			
 			$newVal = $this->db->fetchField("test_table", "varchar_col", ["test_id" => 110]);
@@ -163,7 +190,11 @@
 		 */
 		public function testSelectNullValue() {
 			foreach(["test1", "test2", "test3", null, null] as $val) {
-				$this->db->insert("test_table", ["varchar_col" => $val]);
+				$this->db->insert("test_table", [
+					"varchar_col" => $val,
+					"text_col" => "lorem ipsum",
+					"datetime_col" => date("Y-m-d h:i:s")
+				]);
 			}
 
 			$res = $this->db->count("test_table", "test_id", ["varchar_col" => null]);
@@ -176,7 +207,11 @@
 		 */
 		public function testSelectIntegers() {
 			foreach([2, 2, 2, null, null, "string", "anotherstring"] as $val) {
-				$this->db->insert("test_table", ["varchar_col" => $val]);
+				$this->db->insert("test_table", [
+					"varchar_col" => $val,
+					"text_col" => "lorem ipsum",
+					"datetime_col" => date("Y-m-d h:i:s"),
+				]);
 			}
 
 			$res = $this->db->count("test_table", "test_id", ["varchar_col" => 2]);
@@ -189,7 +224,11 @@
 		 */
 		public function testSelectBooleans() {
 			foreach([true, false] as $val) {
-				$this->db->insert("test_table", ["varchar_col" => $val]);
+				$this->db->insert("test_table", [
+					"varchar_col" => $val,
+					"text_col" => "lorem ipsum",
+					"datetime_col" => date("Y-m-d h:i:s"),
+				]);
 			}
 
 			$true = $this->db->count("test_table", "test_id", ["varchar_col" => true]);
@@ -253,7 +292,7 @@
 			$this->assertIsObject($res);
 
 			$res = $this->db->fetchRow("movies", ["mid" => time()]);
-			$this->assertFalse($res);
+			$this->assertNull($res);
 		}
 
 		/**
