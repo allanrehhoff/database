@@ -54,7 +54,6 @@
 			* @param string $password Password to use for authentication
 			* @param string $database Name of the database to use
 			* @return void
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
 			public function __construct(string $hostname, string $username, string $password, string $database) {
@@ -69,7 +68,6 @@
 
 			/**
 			* This should most likely close the connection when you're done using the \Database\Connection
-			* @author Allan Thue Rehhoff
 			* @return void
 			* @since 1.3
 			*/
@@ -79,8 +77,8 @@
 
 			/**
 			* Allow methods not implemented by this class to be called on the connection
-			* @author Allan Thue Rehhoff
 			* @todo Consider removing the \Database\Connection::getConnection(); method now that we have this.
+			* @throws Exception
 			* @since 1.3
 			*/
 			public function __call(string $method, array $params = []) {
@@ -122,7 +120,6 @@
 			/**
 			* Retrieve the latest initiated \Database\Connection instance.
 			* @return object
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
 			public static function getInstance() : Connection {
@@ -134,7 +131,6 @@
 			* You should rarely have a use for this though.
 			* @since 1.0
 			* @return object
-			* @author Allan Thue Rehhoff
 			*/
 			public function getConnection() : Connection {
 				return $this;
@@ -142,7 +138,6 @@
 
 			/**
 			* Turns off autocommit mode. Until changes made to the database are committed.
-			* @author Allan Thue Rehhoff
 			* @return boolean
 			* @since 2.4
 			*/
@@ -153,7 +148,6 @@
 			/**
 			* Helping wrapper function for PDO::beginTranstion();
 			* @see Database\Connection::beginTransaction();
-			* @author Allan Thue Rehhoff
 			* @return boolean
 			* @since 1.3
 			*/
@@ -163,7 +157,6 @@
 
 			/**
 			* Commits a transaction, returning the database connection to autocommit mode.
-			* @author Allan Thue Rehhoff
 			* @throws PDOException
 			* @return boolean
 			* @since 1.3
@@ -178,7 +171,6 @@
 
 			/**
 			* Rolls back the current transaction
-			* @author Allan Thue Rehhoff
 			* @throws PDOException
 			* @return boolean
 			* @since 1.3
@@ -196,7 +188,6 @@
 			* @param string $sql The parameterized SQL string to query against the database
 			* @param array $driverOptions Arguments to pass along with the query
 			* @since 2.3
-			* @author Allan Thue Rehhoff
 			* @return Database\Statement Returns a prepared SQL statement, instance of Database\Statement
 			*/
 			public function prepare(string $sql, array $driverOptions = []) : Statement {
@@ -255,7 +246,6 @@
 			* @param int $fetchMode Set fetch mode for the query performed. Must be one of PDO::FETCH_* default is PDO::FETCH_OBJECT
 			* @return object The prepared PDO statement after execution. Instance of Database\Connection
 			* @throws PDOException
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
 			public function query(string $sql, ?array $filters = null, int $fetchMode = PDO::FETCH_OBJ) : Statement {
@@ -308,7 +298,6 @@
 			* @param string $table Name of the table containing the row to be fetched
 			* @param array $criteria Criteria used to filter the rows.
 			* @return mixed Returns the first row in the result set, false upon failure.
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
 			public function fetchRow(string $table, ?array $criteria = null) : ?\stdClass {
@@ -323,7 +312,6 @@
 			* @param string $column Column name in $table where cell value will be returned
 			* @param array $criteria Criteria used to filter the rows.
 			* @return mixed Returns a single column from the next row of a result set or FALSE if there are no rows.
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
 			public function fetchCell(string $table, string $column, ?array $criteria = null) {
@@ -351,7 +339,6 @@
 			* @param string $column Column name in $table where value should be returned from.
 			* @param array $criteria Criteria used to filter the rows.
 			* @return array Returns an array containing all the rows matching in the resultset
-			* @author Allan Thue Rehhoff
 			* @since 2.4
 			*/
 			public function fetchCol(string $table, string $column, ?array $criteria = null) : array {
@@ -368,7 +355,6 @@
 			* @param string $table Name of the table to query
 			* @param array $criteria column => value pairs to filter the query results
 			* @return array
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
 			public function select(string $table, ?array $criteria = null) : array {
@@ -382,7 +368,6 @@
 			 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
 			 * @param ?array $criteria Criteria variables for the search sets
 			 * @return array
-			 * @author Allan Thue Rehhoff
 			 * @since 3.1.3
 			 */
 			public function search(string $table, array $searches = [], ?array $criteria = null) {
@@ -420,7 +405,6 @@
 			* @param string $table Name of the table to insert the row in
 			* @param array $variables Column => Value pairs to be inserted
 			* @return int The last inserted ID
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
 			public function insert(string $table, ?array $variables = null) : int {
@@ -465,7 +449,6 @@
 			* @param array $variables Column => Value pairs containg the new values for the row
 			* @param array $criteria Array of criterie for updating a row
 			* @return int Number of affected rows
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
 			public function update(string $table, ?array $variables, ?array $criteria = null) : int {
@@ -483,7 +466,6 @@
 			* @param string $table Table to delete rows from
 			* @param array $criteria Criteria for deletion
 			* @return int Number of rows affected.
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			* @todo Return affected row count
 			*/
@@ -498,7 +480,6 @@
 			* @param string $table Table to insert/replace the row in.
 			* @param array $variables Column => Value pairs to insert.
 			* @return int The last inserted ID
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
 			private function createRowSql(string $type, string $table, ?array $variables = null) : string {
@@ -521,14 +502,13 @@
 			* @param string $seperator String seperator to seperate the pairs with
 			* @param string $variablePrefix string to use for prefixing values in the SQL
 			* @return string
-			* @author Mikkel Jensen
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
 			private function keysToSql(?array $array, string $seperator, string $variablePrefix = "") : string {
 				if ($array == null) return "1";
 
 				$list = [];
+
 				foreach ($array as $column => $value) {
 					if($value === null && $seperator != ',') {
 						$operator = "<=>";
@@ -537,7 +517,6 @@
 					} else {
 						$operator = '=';
 					}
-
 					
 					$list[] = " `$column` $operator :".$variablePrefix.$column;
 				}
@@ -552,7 +531,6 @@
 			* @param string $query A parameterized SQL query
 			* @param array $filter Parameters for $query
 			* @return string The interpolated query.
-			* @author Allan Thue Rehhoff
 			* @since 2.4
 			*/
 			public function debugQuery(string $query, array $filters) : string {
@@ -587,7 +565,6 @@
 			* @param string $query A parameterized SQL query
 			* @param array $filters Parameters for $query
 			* @return string
-			* @author Allan Thue Rehhoff
 			* @since 1.1
 			*/
 			public function interpolateQuery(string $query, array $filters) : string {
@@ -597,7 +574,6 @@
 			/**
 			* Get the last inserted ID
 			* @return int Returns the ID of the last inserted row or sequence value 
-			* @author Allan Thue Rehhoff
 			* @since 1.0
 			*/
 			public function lastInsertId($seqname = null) : int {
