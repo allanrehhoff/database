@@ -123,18 +123,21 @@ namespace Database {
 		* @throws Exception
 		* @author Allan Thue Rehhoff
 		*/
-		public static function load($ids, bool $indexByIDs = true) {
+		public static function load($rows, bool $indexByIDs = true) {
 			$class = get_called_class();
 
-			if(is_array($ids)) {
+			if(is_array($rows)) {
 				$objects = [];
-				foreach($ids as $i => $id) {
-					$index = $indexByIDs ? $id : $i;
-					$objects[$index] = new $class($id);
+
+				foreach($rows as $i => $row) {
+					$instance = new $class($row);
+					$index = $indexByIDs ? $instance->id() : $i;
+					$objects[$index] = $instance;
 				}
+
 				return $objects;
-			} else if(is_numeric($ids)) {
-				return new $class((int) $ids);
+			} else if(is_numeric($rows)) {
+				return new $class((int) $rows);
 			}
 
 			throw new Exception($class."::load(); expects either an array or integer. '".gettype($ids)."' was provided.");
@@ -149,7 +152,8 @@ namespace Database {
 		 * @since 3.2.2
 		 */
 		public static function search(array $searches = [], ?array $criteria = null) {
-			return Connection::getInstance()->search(static::TABLENAME, $searches, $criteria);
+			$rows = Connection::getInstance()->search(static::TABLENAME, $searches, $criteria);
+			return self::load($rows);
 		}
 
 		/**
@@ -178,13 +182,13 @@ namespace Database {
 				$data = null;
 			}
 
-			if ($allowedFields != null) {
+			if($allowedFields != null) {
 				$data = array_intersect_key($data, array_flip($allowedFields));
 			}
 			
 			$key = $this->getKeyField();
 			
-			if ($data !== null && gettype($data) !== "array") {
+			if($data !== null && gettype($data) !== "array") {
 				$data = [$key => $data];
 			}
 
