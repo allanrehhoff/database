@@ -98,7 +98,7 @@ namespace Database {
 		* @return int Number of rows affected
 		*/
 		public function delete() : int {
-			return Connection::getInstance()->delete($this->getTableName(), $this->getKeyFilter());		
+			return Connection::getInstance()->delete($this->getTableName(), $this->getKeyFilter());
 		}
 
 		/**
@@ -138,6 +138,18 @@ namespace Database {
 			}
 
 			throw new Exception($class."::load(); expects either an array or integer. '".gettype($ids)."' was provided.");
+		}
+
+		/**
+		 * Performs a search of the given criteria
+		 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
+		 * @param ?array $criteria Criteria variables for the search sets
+		 * @return array
+		 * @author Allan Thue Rehhoff
+		 * @since 3.2.2
+		 */
+		public static function search(array $searches = [], ?array $criteria = null) {
+			return Connection::getInstance()->search(static::TABLENAME, $searches, $criteria);
 		}
 
 		/**

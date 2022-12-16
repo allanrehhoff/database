@@ -47,7 +47,11 @@
 		*/
 		public function testStaticLoadSingleEntity() {
 			$entity = new Database\EntityType();
-			$entity->set(["varchar_col" => "somevalue", "text_col" => "Lorem ipsum dolor sit amet"]);
+			$entity->set([
+				"varchar_col" => "somevalue",
+				"datetime_col" => date("Y-m-d h:i:s"),
+				"text_col" => "Lorem ipsum dolor sit amet"
+			]);
 			$entity->save();
 			
 			$testId = $this->db->fetchField("test_table", "test_id", ["varchar_col" => "somevalue"]);
@@ -69,7 +73,11 @@
 			$integrity = md5($staticValue.$varcharColValue.$textColValue);
 
 			$entity = new Database\EntityType();
-			$entity->set(["varchar_col" => $varcharColValue, "text_col" => $textColValue]);
+			$entity->set([
+				"varchar_col" => $varcharColValue,
+				"text_col" => $textColValue,
+				"datetime_col" => date("Y-m-d h:i:s"),
+			]);
 			$insert_id = $entity->save();
 
 			$this->assertEquals($insert_id, $this->db->lastInsertId());
@@ -91,7 +99,11 @@
 			$numberItems =  mt_rand(1, 5);
 			for ($i=0; $i < $numberItems; $i++) { 
 				$entity = new Database\EntityType();
-				$entity->set(["varchar_col" => "value".$i, "text_col" => "longvalue ".$i]);
+				$entity->set([
+					"varchar_col" => "value".$i,
+					"text_col" => "longvalue ".$i,
+					"datetime_col" => date("Y-m-d h:i:s")
+				]);
 				$ids[] = $entity->save();
 			}
 
@@ -106,12 +118,37 @@
 		*/
 		public function testInsertAndDelete() {
 			$insert = new Database\EntityType();
-			$insert->set(["varchar_col" => "Lorem ipsum dolor sit amet"])->save();
+			$insert->set([
+				"varchar_col" => "Lorem ipsum dolor sit amet",
+				"text_col" => "some other valua",
+				"datetime_col" => date("Y-m-d h:i:s"),
+			])->save();
 			$insert_id = $insert->id();
 
 			$loaded = Database\EntityType::load($insert_id);
 			$this->assertNotEmpty($loaded);
 
 			$this->assertEquals(1, $loaded->delete());
+		}
+
+		public function testEntityTypeSearch() {
+			for ($i = 0; $i < 5; $i++) { 
+				$randomValue = "phpunittest_".bin2hex(random_bytes(8));
+				
+				$insert = new Database\EntityType();
+				$insert->set([
+					"varchar_col" => $randomValue,
+					"text_col" => "some other value",
+					"datetime_col" => date("Y-m-d h:i:s"),
+				])->save();
+			}
+
+			$result = Database\EntityType::search([
+				"varchar_col LIKE :randomValue"
+			], [
+				"randomValue" => "phpunittest_%"
+			]);
+
+			$this->assertEquals(count($result), 5);
 		}
 	}
