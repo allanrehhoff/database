@@ -1,17 +1,17 @@
 <?php
 	namespace Database {
-		class Collection implements \Iterator, \Countable {
+		class Collection implements \ArrayAccess, \Iterator, \Countable {
 			/**
 			 * @var array Collection of objects that's iterable
 			 */
-			private $collection = [];
+			private $items = [];
 
 			/**
 			 * Constructor
 			 * @param array $objects Array of objects to store as collection
 			 */
 			public function __construct(array $objects) {
-				$this->collection = $objects;
+				$this->items = $objects;
 			}
 
 			/**
@@ -22,16 +22,8 @@
 			public function getFirst() {
 				if($this->isEmpty() === true) return null;
 
-				$key = array_keys($this->collection)[0];
-				return $this->collection[$key];
-			}
-
-			/**
-			 * Coutn the number of elements in this collection
-			 * @return int Number of elements
-			 */
-			public function count() : int {
-				return count($this->collection);
+				$key = array_keys($this->items)[0];
+				return $this->items[$key];
 			}
 
 			/**
@@ -42,17 +34,25 @@
 			public function getLast() {
 				if($this->isEmpty() === true) return null;
 
-				$key = end(array_keys($this->collection));
-				return $this->collection[$key];
+				$key = end(array_keys($this->items));
+				return $this->items[$key];
 			}
 
 			/**
-			 * Get a collection of column values by key
+			 * Coutn the number of elements in this collection
+			 * @return int Number of elements
+			 */
+			public function count() : int {
+				return count($this->items);
+			}
+
+			/**
+			 * Get the values of a given key as a collection
 			 * @param mixed $key array/object key to fetch values from
 			 * @return \Database\Collection
 			 */
 			public function getColumn($key) : Collection {
-				return new self(array_column($this->collection, $key));
+				return new self(array_column($this->items, $key));
 			}
 
 			/**
@@ -60,7 +60,7 @@
 			 * @return bool
 			 */
 			public function isEmpty() : bool {
-				return count($this->collection) === 0;
+				return $this->count() === 0;
 			}
 
 			/**
@@ -68,7 +68,7 @@
 			 * @return void
 			 */
 			public function rewind() : void {
-				reset($this->collection);
+				reset($this->items);
 			}
 
 			/**
@@ -76,21 +76,25 @@
 			 */
 			#[ReturnTypeWillChange]
 			public function current() {
-				return current($this->collection);
+				return current($this->items);
 			}
 
 			/**
 			 * Get current position
+			 * @return mixed
 			 */
+			#[ReturnTypeWillChange]
 			public function key() {
-				return key($this->collection);
+				return key($this->items);
 			}
 
 			/**
 			 * Advance the internal cursor of an array
+			 * @return mixed
 			 */
+			#[ReturnTypeWillChange]
 			public function next() {
-				return next($this->collection);
+				return next($this->items);
 			}
 
 			/**
@@ -98,7 +102,62 @@
 			 * @return bool
 			 */
 			public function valid() : bool {
-				return key($this->collection) !== null;
+				return key($this->items) !== null;
+			}
+
+			/**
+			 * Determine if an item exists at an offset.
+			 *
+			 * @param $key
+			 * @return bool
+			 */
+			public function offsetExists($key) : bool {
+				return isset($this->items[$key]);
+			}
+
+			/**
+			 * Get an item at a given offset.
+			 *
+			 * @param $key
+			 * @return mixed
+			 */
+			#[ReturnTypeWillChange]
+			public function offsetGet($key) : mixed {
+				return $this->items[$key];
+			}
+
+			/**
+			 * Set the item at a given offset.
+			 *
+			 * @param  mixed $key
+			 * @param  $value
+			 * @return void
+			 */
+			public function offsetSet($key, $value) : void {
+				if (is_null($key)) {
+					$this->items[] = $value;
+				} else {
+					$this->items[$key] = $value;
+				}
+			}
+
+			/**
+			 * Unset the item at a given offset.
+			 *
+			 * @param  $key
+			 * @return void
+			 */
+			public function offsetUnset($key) : void {
+				unset($this->items[$key]);
+			}
+
+			/**
+			 * Get all of the items in the collection.
+			 *
+			 * @return array
+			 */
+			public function all() {
+				return $this->items;
 			}
 		} 
 	}
