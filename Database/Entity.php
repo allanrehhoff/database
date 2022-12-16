@@ -20,7 +20,6 @@ namespace Database {
 		* Loads a given entity, instantiates a new if none given.
 		* @param mixed $data Can be either an array of existing data or an entity ID to load.
 		* @return void
-		* @author Allan Thue Rehhoff
 		*/
 		public function __construct($data = null, ?array $allowedFields = null) {
 			$this->set($data, $allowedFields);
@@ -28,7 +27,6 @@ namespace Database {
 
 		/**
 		* Print the Entity object only for debugging purposes
-		* @author Allan Thue Rehhoff
 		* @return string
 		*/
 		function __toString() {
@@ -50,24 +48,30 @@ namespace Database {
 		}
 
 		/**
+		 * Checks if entry exists by key
+		 * This is required together with __get for
+		 * to support 'array_column' in \Database\Collection::getColumn
+		 * @since 3.3.0
+		 * @return bool
+		 */
+		public function __isset($name) : bool {
+		    return isset($this->data[$name]);
+		}
+
+		/**
 		* Gets the value for a given property name
 		* @param string $name name of the property from whom to retrieve a value
 		* @return mixed A property value
 		* @throws Exception
-		* @author Allan Thue Rehhoff
 		*/
+		#[ReturnTypeWillChange]
 		public function __get(string $name) {
-			if ($name == $this->getKeyField()) {
-				throw new Exception("Cannot return key field from getter, try calling ".get_called_class()."::id(); in object context instead.");
-			}
-
 			return $this->data[$name];
 		}
 
 		/**
 		* Saves the entity to a long term storage.
 		* Empty strings are converted to null values
-		* @author Allan Thue Rehhoff
 		* @return mixed if a new entity was just inserted, returns the primary key for that entity, otherwise the current data is returned
 		*/
 		public function save() {
@@ -105,7 +109,6 @@ namespace Database {
 		* Make a given value safe for insertion, could prevent future XSS injections
 		* @param string Key of the data value to retrieve
 		* @return string a html friendly string
-		* @author Allan Thue Rehhoff
 		*/
 		public function safe(string $key) : ?string {
 			$data = $this->get($key);
@@ -121,7 +124,6 @@ namespace Database {
 		* @param bool $indexByIDs If loading multiple ID's set this to true, to index the resulting array by entity IDs
 		* @return mixed The loaded entities
 		* @throws Exception
-		* @author Allan Thue Rehhoff
 		*/
 		public static function load($rows, bool $indexByIDs = true) {
 			$class = get_called_class();
@@ -135,7 +137,7 @@ namespace Database {
 					$objects[$index] = $instance;
 				}
 
-				return $objects;
+				return new Collection($objects);
 			} else if(is_numeric($rows)) {
 				return new $class((int) $rows);
 			}
@@ -148,8 +150,7 @@ namespace Database {
 		 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
 		 * @param ?array $criteria Criteria variables for the search sets
 		 * @return array
-		 * @author Allan Thue Rehhoff
-		 * @since 3.2.2
+		 * @since 3.3.0
 		 */
 		public static function search(array $searches = [], ?array $criteria = null) {
 			$rows = Connection::getInstance()->search(static::TABLENAME, $searches, $criteria);
@@ -213,7 +214,6 @@ namespace Database {
 		/**
 		* Gets the current entity data
 		* @return array
-		* @author Allan Thue Rehhoff
 		*/
 		public function getData() : array {
 			return $this->data;
@@ -223,7 +223,6 @@ namespace Database {
 		* Get the value corrosponding to a given key
 		* @param string $key key name of the value to retrieve.
 		* @return mixed
-		* @author Allan Thue Rehhoff
 		*/
 		public function get(string $key) {
 			return $this->data[$key] ?? null;
@@ -246,7 +245,6 @@ namespace Database {
 		/**
 		* Get the current value of key index
 		* @return mixed the key value
-		* @author Allan Thue Rehhoff
 		*/
 		public function getKey() {
 			return $this->key;
@@ -255,7 +253,6 @@ namespace Database {
 		/**
 		* Gets an array suitable for WHERE clauses in SQL statements
 		* @return array A filter array
-		* @author Allan Thue Rehhoff
 		*/
 		public function getKeyFilter() : array {
 			return [$this->getKeyField() => $this->key];
@@ -264,7 +261,6 @@ namespace Database {
 		/**
 		* Wrapper method for getKey();
 		* @return mixed A key value
-		* @author Allan Thue Rehhoff
 		*/
 		public function id() {
 			return is_numeric($this->key) ? $this->key : $this->safe($this->getKeyField());
@@ -273,7 +269,6 @@ namespace Database {
 		/**
 		* Determine if the loaded entity exists in db
 		* @return bool
-		* @author Allan Thue Rehhoff
 		*/
 		public function exists() : bool {
 			return $this->key !== null;
@@ -282,7 +277,6 @@ namespace Database {
 		/**
 		* Determine if the loaded entity is new
 		* @return bool
-		* @author Allan Thue Rehhoff
 		*/
 		public function isNew() : bool {
 			return $this->getKey() === null;
