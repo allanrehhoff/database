@@ -1,6 +1,9 @@
 # Database\Connection class #
 _By Allan Rehhoff_
 
+**Important regarding V4**
+Version 4 is still in active development, however the master branch should be stable, updates may arrive at a moments notice.  
+
 A library for querying your database in an easy-to-maintain objected oriented manner.  
 It features a few classes to speed up CMS / MVC / API and general CRUD development, and abstracts away your database queries.  
 
