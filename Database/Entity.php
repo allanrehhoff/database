@@ -1,10 +1,10 @@
 <?php
 /**
-* The base class for a CRUD'able entity.
-* @author Allan Rehhoff
+* The base class for any CRUD'able entity.
 */
 namespace Database {
 	use Exception;
+	use TypeError;
 
 	/**
 	* Represents a CRUD'able entity.
@@ -75,17 +75,13 @@ namespace Database {
 		* @return mixed if a new entity was just inserted, returns the primary key for that entity, otherwise the current data is returned
 		*/
 		public function save() {
-			try {
-				if ($this->exists() === true) {
-					Connection::getInstance()->update($this->getTableName(), $this->data, $this->getKeyFilter());
-					return $this->data;
-				} else {
-					if(empty($this->data)) throw new Exception("Data variable is empty");
-					$this->key = Connection::getInstance()->insert($this->getTableName(), $this->data);
-					return $this->key;
-				}
-			} catch(Exception $e) {
-				throw $e;
+			if ($this->exists() === true) {
+				Connection::getInstance()->update($this->getTableName(), $this->data, $this->getKeyFilter());
+				return $this->data;
+			} else {
+				if(empty($this->data)) throw new Exception("Data variable is empty");
+				$this->key = Connection::getInstance()->insert($this->getTableName(), $this->data);
+				return $this->key;
 			}
 		}
 
@@ -123,12 +119,12 @@ namespace Database {
 		* @param mixed $ids an array of ID's or an integer to load
 		* @param bool $indexByIDs If loading multiple ID's set this to true, to index the resulting array by entity IDs
 		* @return mixed The loaded entities
-		* @throws Exception
+		* @throws TypeError
 		*/
 		public static function load($rows, bool $indexByIDs = true) {
 			$class = get_called_class();
 
-			if(is_array($rows)) {
+			if(is_iterable($rows)) {
 				$objects = [];
 
 				foreach($rows as $i => $row) {
@@ -142,7 +138,7 @@ namespace Database {
 				return new $class((int) $rows);
 			}
 
-			throw new Exception($class."::load(); expects either an array or integer. '".gettype($ids)."' was provided.");
+			throw new TypeError($class."::load(); expects either an array or integer. '".gettype($rows)."' was provided.");
 		}
 
 		/**
@@ -162,7 +158,6 @@ namespace Database {
 		* @param array $values key => value pairs of values to set
 		* @param array $allowedFields keys of fields allowed to be altered
 		* @return object The current entity instance
-		* @author Allan Thue Rehhoff
 		*/
 		public function set($data = null, ?array $allowedFields = null) : Entity {
 			if(is_object($data) === true) {
@@ -247,7 +242,7 @@ namespace Database {
 		* @return mixed the key value
 		*/
 		public function getKey() {
-			return $this->key;
+			return is_numeric($this->key) ? (int)$this->key : $this->safe($this->getKeyField());
 		}
 
 		/**
@@ -263,7 +258,7 @@ namespace Database {
 		* @return mixed A key value
 		*/
 		public function id() {
-			return is_numeric($this->key) ? $this->key : $this->safe($this->getKeyField());
+			return $this->getKey();
 		}
 
 		/**

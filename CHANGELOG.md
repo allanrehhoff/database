@@ -1,4 +1,15 @@
 # Changelog #  
+v4.0.0
+- Added Entity::search() method.  
+- Added magic method __isset to \Database\Entity
+- Added Database\Collection object, loading entities will now return a collection.  
+- Removed myself as author from docblocks.  
+- Some support for changing return types via PHP8 attributes.  
+- Database\Entity::load(); now throws a TypeError when wrong parameter given.  
+- Making sure Entity::id(); wraps properly around Entity::getKey();  
+- Database\Entity::save(); no longer just re-throws errors, should be handled by the caller.  
+- Updated README documentation.  
+
 v3.2.1
 - Rewritten Database::upsert(); method for future compatibility with multi-inserts.  
 - Fixed PDO Param values being interpreted as \PDO::PARAM_STR.  
