@@ -4,7 +4,6 @@
 */
 namespace Database {
 	use Exception;
-	use TypeError;
 
 	/**
 	* Represents a CRUD'able entity.
@@ -13,11 +12,12 @@ namespace Database {
 		private $key;
 		protected $data = [];
 
-		abstract protected function getKeyField() : string;
-		abstract protected function getTableName() : string;
+		abstract protected static function getKeyField() : string;
+		abstract protected static function getTableName() : string;
 
 		/**
 		* Loads a given entity, instantiates a new if none given.
+		*
 		* @param mixed $data Can be either an array of existing data or an entity ID to load.
 		* @return void
 		*/
@@ -27,6 +27,7 @@ namespace Database {
 
 		/**
 		* Print the Entity object only for debugging purposes
+		*
 		* @return string
 		*/
 		function __toString() {
@@ -39,6 +40,7 @@ namespace Database {
 
 		/**
 		* Sets a property to a given value
+		*
 		* @param string $name Name of the property to set to $value
 		* @param mixed $value A value to set
 		* @return void
@@ -51,6 +53,7 @@ namespace Database {
 		 * Checks if entry exists by key
 		 * This is required together with __get for
 		 * to support 'array_column' in \Database\Collection::getColumn
+		 *
 		 * @since 3.3.0
 		 * @return bool
 		 */
@@ -60,11 +63,11 @@ namespace Database {
 
 		/**
 		* Gets the value for a given property name
+		*
 		* @param string $name name of the property from whom to retrieve a value
 		* @return mixed A property value
-		* @throws Exception
 		*/
-		#[ReturnTypeWillChange]
+		#[\ReturnTypeWillChange]
 		public function __get(string $name) {
 			return $this->data[$name];
 		}
@@ -72,6 +75,8 @@ namespace Database {
 		/**
 		* Saves the entity to a long term storage.
 		* Empty strings are converted to null values
+		*
+		* @throws \Exception
 		* @return mixed if a new entity was just inserted, returns the primary key for that entity, otherwise the current data is returned
 		*/
 		public function save() {
@@ -79,7 +84,7 @@ namespace Database {
 				Connection::getInstance()->update($this->getTableName(), $this->data, $this->getKeyFilter());
 				return $this->data;
 			} else {
-				if(empty($this->data)) throw new Exception("Data variable is empty");
+				if(empty($this->data)) throw new \Exception("Data variable is empty");
 				$this->key = Connection::getInstance()->insert($this->getTableName(), $this->data);
 				return $this->key;
 			}
@@ -87,14 +92,16 @@ namespace Database {
 
 		/**
 		 * Update or insert row
+		 * 
+		 * @return Database\Statement
 		 */
-		public function upsert() {
+		public function upsert() : Statement {
 			return Connection::getInstance()->upsert($this->getTableName(), $this->data, $this->getKeyFilter());
 		}
 
 		/**
 		* Permanently delete a given entity row
-		* @author Allan Thue Rehhoff
+		*
 		* @return int Number of rows affected
 		*/
 		public function delete() : int {
@@ -103,6 +110,7 @@ namespace Database {
 
 		/**
 		* Make a given value safe for insertion, could prevent future XSS injections
+		*
 		* @param string Key of the data value to retrieve
 		* @return string a html friendly string
 		*/
@@ -116,10 +124,11 @@ namespace Database {
 
 		/**
 		* Load one or more ID's into entities
+		*
 		* @param mixed $ids an array of ID's or an integer to load
 		* @param bool $indexByIDs If loading multiple ID's set this to true, to index the resulting array by entity IDs
 		* @return mixed The loaded entities
-		* @throws TypeError
+		* @throws \TypeError
 		*/
 		public static function load($rows, bool $indexByIDs = true) {
 			$class = get_called_class();
@@ -138,23 +147,25 @@ namespace Database {
 				return new $class((int) $rows);
 			}
 
-			throw new TypeError($class."::load(); expects either an array or integer. '".gettype($rows)."' was provided.");
+			throw new \TypeError($class."::load(); expects either an array or integer. '".gettype($rows)."' was provided.");
 		}
 
 		/**
 		 * Performs a search of the given criteria
+		 *
 		 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
 		 * @param ?array $criteria Criteria variables for the search sets
 		 * @return array
 		 * @since 3.3.0
 		 */
 		public static function search(array $searches = [], ?array $criteria = null) {
-			$rows = Connection::getInstance()->search(static::TABLENAME, $searches, $criteria);
+			$rows = Connection::getInstance()->search(static::getTableName(), $searches, $criteria);
 			return self::load($rows);
 		}
 
 		/**
 		* Sets ones or more properties to a given value.
+		*
 		* @param array $values key => value pairs of values to set
 		* @param array $allowedFields keys of fields allowed to be altered
 		* @return object The current entity instance
@@ -182,7 +193,7 @@ namespace Database {
 				$data = array_intersect_key($data, array_flip($allowedFields));
 			}
 			
-			$key = $this->getKeyField();
+			$key = static::getKeyField();
 			
 			if($data !== null && gettype($data) !== "array") {
 				$data = [$key => $data];
@@ -208,6 +219,7 @@ namespace Database {
 
 		/**
 		* Gets the current entity data
+		*
 		* @return array
 		*/
 		public function getData() : array {
@@ -216,6 +228,7 @@ namespace Database {
 
 		/**
 		* Get the value corrosponding to a given key
+		*
 		* @param string $key key name of the value to retrieve.
 		* @return mixed
 		*/
@@ -225,12 +238,14 @@ namespace Database {
 
 		/**
 		 * Get and shift a value off the data array
+		 * 
 		 * @param string $key key name of the value to retrieve
+		 * @return mixed
 		 */
 		public function shift(string $key) {
 			$data = $this->get($key);
 
-			if(isset($this->data[$key])) {
+			if(array_key_exists($key, $data) === true) {
 				unset($this->data[$key]);
 			}
 
@@ -239,22 +254,25 @@ namespace Database {
 
 		/**
 		* Get the current value of key index
+		*
 		* @return mixed the key value
 		*/
 		public function getKey() {
-			return is_numeric($this->key) ? (int)$this->key : $this->safe($this->getKeyField());
+			return is_numeric($this->key) ? (int)$this->key : $this->safe(static::getKeyField());
 		}
 
 		/**
 		* Gets an array suitable for WHERE clauses in SQL statements
+		*
 		* @return array A filter array
 		*/
 		public function getKeyFilter() : array {
-			return [$this->getKeyField() => $this->key];
+			return [static::getKeyField() => $this->key];
 		}
 
 		/**
 		* Wrapper method for getKey();
+		*
 		* @return mixed A key value
 		*/
 		public function id() {
@@ -263,6 +281,7 @@ namespace Database {
 
 		/**
 		* Determine if the loaded entity exists in db
+		*
 		* @return bool
 		*/
 		public function exists() : bool {
@@ -271,6 +290,7 @@ namespace Database {
 
 		/**
 		* Determine if the loaded entity is new
+		*
 		* @return bool
 		*/
 		public function isNew() : bool {
