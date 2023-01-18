@@ -3,3 +3,4 @@ tests/phpunit.xml
 error_log
 /vendor/
 .phpunit.result.cache
+div.php
