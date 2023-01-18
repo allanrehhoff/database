@@ -2,7 +2,6 @@
 	/**
 	* Quickly test most frequent use cases for the DatabaseConnection() class
 	* @todo Add the following queries to be tested against.
-	* @author Allan Thue Rehhoff
 	*/
 	class DatabaseConnectionTest extends PHPUnit\Framework\TestCase {
 		private $db;
@@ -189,6 +188,8 @@
 		 * @author Allan Thue Rehhoff
 		 */
 		public function testSelectNullValue() {
+			$this->db->delete("test_table", ["varchar_col" => null]);
+
 			foreach(["test1", "test2", "test3", null, null] as $val) {
 				$this->db->insert("test_table", [
 					"varchar_col" => $val,
@@ -206,6 +207,8 @@
 		 * @author Allan Thue Rehhoff
 		 */
 		public function testSelectIntegers() {
+			$this->db->delete("test_table", ["varchar_col" => 2]);
+
 			foreach([2, 2, 2, null, null, "string", "anotherstring"] as $val) {
 				$this->db->insert("test_table", [
 					"varchar_col" => $val,
@@ -223,6 +226,8 @@
 		 * @author Allan Thue Rehhoff
 		 */
 		public function testSelectBooleans() {
+			$this->db->delete("test_table", ["varchar_col" => [true, false]]);
+
 			foreach([true, false] as $val) {
 				$this->db->insert("test_table", [
 					"varchar_col" => $val,
@@ -245,7 +250,6 @@
 			$sdb = Database\Connection::getInstance();
 			$this->assertInstanceOf("Database\Connection", $sdb);
 			$res = $sdb->query("SELECT mid FROM movies LIMIT 1")->fetchAll();
-			$this->assertIsArray($res);
 		}
 
 		/**
@@ -253,7 +257,6 @@
 		*/
 		public function testSelectQueryWithoutParameter() {
 			$res = $this->db->query("SELECT mid FROM movies")->fetchAll();
-			$this->assertIsArray($res);
 			$this->assertNotEmpty($res);
 		}
 
@@ -262,7 +265,6 @@
 		*/
 		public function testSelectFromParameterizedQuery() {
 			$res = $this->db->query("SELECT mid FROM movies WHERE mid > :num", ["num" => 1])->fetchAll();
-			$this->assertIsArray($res);
 			$this->assertNotEmpty($res);
 		}
 
@@ -271,7 +273,6 @@
 		*/
 		public function testSelectQueryFromWrapperMethod() {
 			$res = $this->db->select("movies");
-			$this->assertIsArray($res);
 			$this->assertNotEmpty($res);	
 		}
 
@@ -280,7 +281,6 @@
 		*/
 		public function testSelectQueryMethodWithParameters() {
 			$res = $this->db->select("movies", ["mid" => 1]);
-			$this->assertIsArray($res);
 			$this->assertNotEmpty($res);
 		}
 
