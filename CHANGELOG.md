@@ -1,4 +1,5 @@
 # Changelog #  
+
 v4.0.0
 - Added Entity::search() method.  
 - Added magic method __isset to \Database\Entity
@@ -8,6 +9,7 @@ v4.0.0
 - Database\Entity::load(); now throws a TypeError when wrong parameter given.  
 - Making sure Entity::id(); wraps properly around Entity::getKey();  
 - Database\Entity::save(); no longer just re-throws errors, should be handled by the caller.  
+- Static constants moved to abstract static functions.  
 - Updated README documentation.  
 
 v3.2.1
