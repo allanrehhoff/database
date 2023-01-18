@@ -3,52 +3,39 @@
 	* Represents a connection between the server and the database.
 	* Easily perform SQL queries without writing (more than neccesary) SQL.
 	* Credits to Mikkel Jensen & Victoria Hansen from whom I in cold blood have undeterred copied some of this code from.
+	*
 	* @author Allan Thue Rehhoff
 	* @version 3.2.1
 	*/
 	namespace Database {
-		use \PDO;
-		use \Exception;
-		use \PDDException;
-
 		class Connection {
-			/**
-			* @var boolean True if a transaction has started, false otherwise.
-			*/
+			/** @var boolean True if a transaction has started, false otherwise. */
 			private $transactionStarted = false;
 
-			/**
-			*@var object  The singleton instance of the this class.
-			*/
+			/** @var object  The singleton instance of the this class. */
 			private static $singletonInstance;
 
-			/**
-			* @var PDO Database handle
-			*/
+			/** @var PDO Database handle */
 			private $dbh;
 
-			/**
-			* @var Database\Statement Holds the last prepared statement after execution.
-			*/
+			/** @var array Filters to prepare before querying */
+			private $filters;
+
+			/** @var Statement Holds the last prepared statement after execution. */
 			public $statement;
 
-			/**
-			* @var int Number of affected rows from last query
-			*/
+			/** @var int Number of affected rows from last query */
 			public $rowCount;
 
-			/**
-			* @var int Number of queries executed.
-			*/
+			/** @var int Number of queries executed. */
 			public $queryCount = 0;
 
-			/**
-			* @var string Last query attempted to be executed.
-			*/
+			/** @var string Last query attempted to be executed. */
 			public $lastQuery;
 
 			/**
 			* Initiate a new database connection using PDO as a driver.
+			*
 			* @param string $hostname Hostname to connect to
 			* @param string $username Username to use for authentication
 			* @param string $password Password to use for authentication
@@ -58,7 +45,7 @@
 			*/
 			public function __construct(string $hostname, string $username, string $password, string $database) {
 				if (extension_loaded("pdo") === false) {
-					throw new Exception("PDO does not appear to be enabled for this server.");
+					throw new \Exception("PDO does not appear to be enabled for this server.");
 				}
 
 				$this->connect($hostname, $username, $password, $database);
@@ -68,6 +55,7 @@
 
 			/**
 			* This should most likely close the connection when you're done using the \Database\Connection
+			*
 			* @return void
 			* @since 1.3
 			*/
@@ -77,6 +65,7 @@
 
 			/**
 			* Allow methods not implemented by this class to be called on the connection
+			*
 			* @todo Consider removing the \Database\Connection::getConnection(); method now that we have this.
 			* @throws Exception
 			* @since 1.3
@@ -85,12 +74,13 @@
 				if(method_exists($this, $method)) {
 					return call_user_func_array([$this, $method], $params);
 				} else {
-					throw new Exception("PDO::".$method." no such method.");
+					throw new \Exception("PDO::".$method." no such method.");
 				}
 			} 
 
 			/**
 			* Does the actual connection
+			*
 			* @param string $hostname Hostname to connect to
 			* @param string $username Username to use for authentication
 			* @param string $password Password to use for authentication
@@ -99,9 +89,9 @@
 			* @since 3.0
 			*/
 			public function connect(string $hostname, string $username, string $password, string $database) : Connection {
-				$this->dbh = new PDO("mysql:host=".$hostname.";dbname=".$database, $username, $password);
-				$this->dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-				$this->dbh->setAttribute(PDO::ATTR_STATEMENT_CLASS, ["Database\Statement", [$this]]);
+				$this->dbh = new \PDO("mysql:host=".$hostname.";dbname=".$database, $username, $password);
+				$this->dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+				$this->dbh->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ["Database\Statement", [$this]]);
 				$this->dbh->query("SET NAMES utf8mb4");
 
 				return $this;
@@ -109,6 +99,7 @@
 
 			/**
 			* Closes the PDO connection and nullifies any statements
+			*
 			* @return void
 			* @since 3.0
 			*/
@@ -119,7 +110,8 @@
 
 			/**
 			* Retrieve the latest initiated \Database\Connection instance.
-			* @return object
+			*
+			* @return Connection
 			* @since 1.0
 			*/
 			public static function getInstance() : Connection {
@@ -129,8 +121,9 @@
 			/**
 			* Retrieve the connection instance used by the current \Database\Connection instance.
 			* You should rarely have a use for this though.
+			*
 			* @since 1.0
-			* @return object
+			* @return Connection
 			*/
 			public function getConnection() : Connection {
 				return $this;
@@ -138,6 +131,7 @@
 
 			/**
 			* Turns off autocommit mode. Until changes made to the database are committed.
+			*
 			* @return boolean
 			* @since 2.4
 			*/
@@ -147,6 +141,7 @@
 
 			/**
 			* Helping wrapper function for PDO::beginTranstion();
+			*
 			* @see Database\Connection::beginTransaction();
 			* @return boolean
 			* @since 1.3
@@ -157,7 +152,8 @@
 
 			/**
 			* Commits a transaction, returning the database connection to autocommit mode.
-			* @throws PDOException
+			*
+			* @throws \PDOException
 			* @return boolean
 			* @since 1.3
 			*/
@@ -165,13 +161,14 @@
 				if($this->transactionStarted === true) {
 					return $this->dbh->commit();
 				} else {
-					throw new PDOException("Attempted to commit when not in transaction, or transaction failed to start.");
+					throw new \PDOException("Attempted to commit when not in transaction, or transaction failed to start.");
 				}
 			}
 
 			/**
 			* Rolls back the current transaction
-			* @throws PDOException
+			*
+			* @throws \PDOException
 			* @return boolean
 			* @since 1.3
 			*/
@@ -179,16 +176,17 @@
 				if($this->transactionStarted === true) {
 					return $this->dbh->rollBack();
 				} else {
-					throw new PDOException("Attempted rollback when not in transaction.");
+					throw new \PDOException("Attempted rollback when not in transaction.");
 				}
 			}
 
 			/**
 			* Overloads PDO::prepare(); to provide support for additional checks and functionality.
+			*
 			* @param string $sql The parameterized SQL string to query against the database
 			* @param array $driverOptions Arguments to pass along with the query
 			* @since 2.3
-			* @return Database\Statement Returns a prepared SQL statement, instance of Database\Statement
+			* @return Statement Returns a prepared SQL statement, instance of Database\Statement
 			*/
 			public function prepare(string $sql, array $driverOptions = []) : Statement {
 				// if a filter value is an array we'll create an IN syntax
@@ -221,15 +219,15 @@
 						$type = gettype($value);
 
 						if($type == "NULL") {
-							$statement->bindValue($param, $value, PDO::PARAM_NULL);
+							$statement->bindValue($param, $value, \PDO::PARAM_NULL);
 						} else if($type == "boolean") {
-							$statement->bindValue($param, $value, PDO::PARAM_STR);
+							$statement->bindValue($param, $value, \PDO::PARAM_STR);
 						} else if($type == "integer") {
-							$statement->bindValue($param, $value, PDO::PARAM_INT);
+							$statement->bindValue($param, $value, \PDO::PARAM_INT);
 						} else if($type == "double") {
-							$statement->bindValue($param, $value, PDO::PARAM_STR);
+							$statement->bindValue($param, $value, \PDO::PARAM_STR);
 						} else if($type == "string") {
-							$statement->bindValue($param, $value, PDO::PARAM_STR);
+							$statement->bindValue($param, $value, \PDO::PARAM_STR);
 						} else {
 							$statement->bindValue($param, $value);
 						}
@@ -241,14 +239,15 @@
 
 			/**
 			* Execute a parameterized SQL query.
+			*
 			* @param string $sql The parameterized SQL string to query against the database
 			* @param array $filters Arguments to pass along with the query.
 			* @param int $fetchMode Set fetch mode for the query performed. Must be one of PDO::FETCH_* default is PDO::FETCH_OBJECT
-			* @return object The prepared PDO statement after execution. Instance of Database\Connection
-			* @throws PDOException
-			* @since 1.0
+			* @since 1.0 
+			* @throws \PDOException
+			* @return Statement
 			*/
-			public function query(string $sql, ?array $filters = null, int $fetchMode = PDO::FETCH_OBJ) : Statement {
+			public function query(string $sql, ?array $filters = null, int $fetchMode = \PDO::FETCH_OBJ) : Statement {
 				try {
 					$this->filters 	 = $filters;
 
@@ -257,8 +256,8 @@
 					$this->statement->execute();
 					$this->statement->setFetchMode($fetchMode);
 					$this->queryCount++;
-				} catch(PDOException $exception) {
-					throw new PDOException($exception->getCode().": ".$exception->getMessage(), (int) $exception->getCode());
+				} catch(\PDOException $exception) {
+					throw new \PDOException($exception->getCode().": ".$exception->getMessage(), (int) $exception->getCode());
 				} finally {
 					$this->lastQuery = $sql;
 				}
@@ -268,6 +267,7 @@
 
 			/**
 			* Count total number rows in a column
+			*
 			* @todo Find out if this can be replaced by countQuery();
 			* @return int
 			*/
@@ -283,6 +283,7 @@
 
 			/**
 			 * Count the results of a query
+			 * 
 			 * @param string $query the parameterized query
 			 * @param array $criteria Key value pairs to use with the query
 			 * @return int Row coutn
@@ -295,6 +296,7 @@
 			/**
 			* Fetch a single row from the given criteria.
 			* Rows are not ordered, make sure your criteria matches the desired row.
+			*
 			* @param string $table Name of the table containing the row to be fetched
 			* @param array $criteria Criteria used to filter the rows.
 			* @return mixed Returns the first row in the result set, false upon failure.
@@ -308,6 +310,7 @@
 
 			/**
 			* Fetch a cells value from the given criteria.
+			*
 			* @param string $table Name of the table containing the row to be fetched
 			* @param string $column Column name in $table where cell value will be returned
 			* @param array $criteria Criteria used to filter the rows.
@@ -326,6 +329,7 @@
 
 			/**
 			* Alias of \Database\Connection::fetchCell implemented for the drupal developers sake.
+			*
 			* @see \Database\Connection::fetchCell();
 			*/
 			public function fetchField(string $table, string $column, ?array $criteria = null) {
@@ -335,6 +339,7 @@
 			/**
 			* Fetches a column of values from the given table.
 			* This function will always return an array.
+			*
 			* @param string $table Name of the table containing the rows to be fetched
 			* @param string $column Column name in $table where value should be returned from.
 			* @param array $criteria Criteria used to filter the rows.
@@ -343,15 +348,12 @@
 			*/
 			public function fetchCol(string $table, string $column, ?array $criteria = null) : array {
 				$sql = "SELECT `".$column."` FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND");
-				$result = $this->query($sql, $criteria)->fetchCol();
-
-				// PHP < 8.0.0 compat. PDOStatement::fetchAll(); will return false
-				// if the result set was empty, fixed in PHP 8.0.0
-				return $result !== false ? $result : [];
+				return $this->query($sql, $criteria)->fetchCol();
 			}
 
 			/**
 			* Select rows based on the given criteria
+			*
 			* @param string $table Name of the table to query
 			* @param array $criteria column => value pairs to filter the query results
 			* @return array
@@ -364,6 +366,7 @@
 
 			/**
 			 * Performs a search of the given criteria
+			 * 
 			 * @param string $table Name of the table to search
 			 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
 			 * @param ?array $criteria Criteria variables for the search sets
@@ -376,7 +379,11 @@
 			}
 
 			/**
-			 * @todo Needs implementation
+			 * Inserts multiple rows in a single query
+			 * 
+			 * @param string $table Table to insert into
+			 * @param ?array $variables Multidimensional with associative sub-arrays to insert
+			 * @return Statement
 			 */
 			public function insertMultiple(string $table, ?array $variables = null) : Statement {
 				$binds = [];
@@ -402,6 +409,7 @@
 
 			/**
 			* Inserts a row in the given table.
+			*
 			* @param string $table Name of the table to insert the row in
 			* @param array $variables Column => Value pairs to be inserted
 			* @return int The last inserted ID
@@ -416,6 +424,7 @@
 			/**
 			* Replaces a new row into the given table.
 			* Already existing rows with matching PRIMARY key or UNIQUE index are deleted and then re-inserted.
+			*
 			* @param string $table Name of the table to replace into
 			* @param array $variables Column => Value pairs to be inserted
 			* @return int The last inserted ID
@@ -429,22 +438,24 @@
 
 			/**
 			 * Update or insert row, uses ON DUPLICATE KEY syntax
+			 * 
 			 * @param $table Table to update or insert again
 			 * @param ?array $variables column => value pairs to insert/update
 			 * @param ?array $criteria Criteria columns, e.g. columns with unique indexes
-			 * @return int Number of rows affected
+			 * @return Statement
 			 * @since 3.2.0
 			 */
 			public function upsert(string $table, ?array $variables = null) : Statement {
 				$updates = [];
 				foreach($variables as $column => $value) $updates[] = '`' . $column . '` = VALUES(' . $column . ')';
-				$sql = $this->createRowSql("INSERT", $table, $variables) . " ON DUPLICATE KEY UPDATE " . implode(', ', $updates);
+				$sql = $this->createRowSql("INSERT", $table, $variables) . " ON DUPLICATE KEY UPDATE " . implode(',', $updates);
 
 				return $this->query($sql, $variables);
 			}
 
 			/**
 			* Update rows in the given table depending on the criteria.
+			*
 			* @param string $table Name of the table to update rows in
 			* @param array $variables Column => Value pairs containg the new values for the row
 			* @param array $criteria Array of criterie for updating a row
@@ -463,6 +474,7 @@
 
 			/**
 			* Delete rows from the given table by criteria.
+			*
 			* @param string $table Table to delete rows from
 			* @param array $criteria Criteria for deletion
 			* @return int Number of rows affected.
@@ -476,6 +488,7 @@
 
 			/**
 			* Internal function to insert or replace a row.
+			*
 			* @param string $type SQL operator to with the INTO can be either INSERT or REPLACE
 			* @param string $table Table to insert/replace the row in.
 			* @param array $variables Column => Value pairs to insert.
@@ -498,6 +511,7 @@
 			/**
 			* Internal function to convert column=>value pairs into SQL.
 			* If a parameter value is an array, it will be treated as such, using the IN operator.
+			*
 			* @param array $array Array of arguments to parse (You sure yet that it's an array?)
 			* @param string $seperator String seperator to seperate the pairs with
 			* @param string $variablePrefix string to use for prefixing values in the SQL
@@ -528,6 +542,7 @@
 			* Debugging prepared statements can be severely painful, use this as you would with \Database\Connection::query(); to output the resulting SQL
 			* Replaces any parameter placeholders in a query with the corrosponding value that parameter.
 			* Assumes anonymous parameters from $params are are in the same order as specified in $query
+			*
 			* @param string $query A parameterized SQL query
 			* @param array $filter Parameters for $query
 			* @return string The interpolated query.
@@ -561,6 +576,7 @@
 
 			/**
 			* Wrapper function for debugging purposes
+			*
 			* @see Database\Connection::debugQuery()
 			* @param string $query A parameterized SQL query
 			* @param array $filters Parameters for $query
@@ -573,6 +589,7 @@
 
 			/**
 			* Get the last inserted ID
+			*
 			* @return int Returns the ID of the last inserted row or sequence value 
 			* @since 1.0
 			*/
