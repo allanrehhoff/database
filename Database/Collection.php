@@ -8,6 +8,7 @@
 
 			/**
 			 * Constructor
+			 * 
 			 * @param array $objects Array of objects to store as collection
 			 */
 			public function __construct(array $objects) {
@@ -17,8 +18,10 @@
 			/**
 			 * Get first element of collection
 			 * Returns null if collection is empty
+			 * 
+			 * @return mixed
 			 */
-			#[ReturnTypeWillChange]
+			#[\ReturnTypeWillChange]
 			public function getFirst() {
 				if($this->isEmpty() === true) return null;
 
@@ -29,17 +32,21 @@
 			/**
 			 * Get first element of collection
 			 * Returns null if collection is empty
+			 * 
+			 * @return mixed
 			 */
-			#[ReturnTypeWillChange]
+			#[\ReturnTypeWillChange]
 			public function getLast() {
 				if($this->isEmpty() === true) return null;
 
-				$key = end(array_keys($this->items));
+				$keys = array_keys($this->items);
+				$key = end($keys);
 				return $this->items[$key];
 			}
 
 			/**
 			 * Coutn the number of elements in this collection
+			 * 
 			 * @return int Number of elements
 			 */
 			public function count() : int {
@@ -48,6 +55,7 @@
 
 			/**
 			 * Get the values of a given key as a collection
+			 * 
 			 * @param mixed $key array/object key to fetch values from
 			 * @return \Database\Collection
 			 */
@@ -57,6 +65,7 @@
 
 			/**
 			 * Tell whether the collection is empty or not
+			 * 
 			 * @return bool
 			 */
 			public function isEmpty() : bool {
@@ -65,6 +74,7 @@
 
 			/**
 			 * Rewind the collection array back to the start
+			 * 
 			 * @return void
 			 */
 			public function rewind() : void {
@@ -73,32 +83,37 @@
 
 			/**
 			 * Get object object at current position
+			 * 
+			 * @return mixed
 			 */
-			#[ReturnTypeWillChange]
+			#[\ReturnTypeWillChange]
 			public function current() {
 				return current($this->items);
 			}
 
 			/**
 			 * Get current position
+			 * 
 			 * @return mixed
 			 */
-			#[ReturnTypeWillChange]
+			#[\ReturnTypeWillChange]
 			public function key() {
 				return key($this->items);
 			}
 
 			/**
 			 * Advance the internal cursor of an array
+			 * 
 			 * @return mixed
 			 */
-			#[ReturnTypeWillChange]
-			public function next() {
-				return next($this->items);
+			#[\ReturnTypeWillChange]
+			public function next() : void {
+				next($this->items);
 			}
 
 			/**
 			 * Check whether the collection contains more entries
+			 * 
 			 * @return bool
 			 */
 			public function valid() : bool {
@@ -121,7 +136,7 @@
 			 * @param $key
 			 * @return mixed
 			 */
-			#[ReturnTypeWillChange]
+			#[\ReturnTypeWillChange]
 			public function offsetGet($key) : mixed {
 				return $this->items[$key];
 			}
