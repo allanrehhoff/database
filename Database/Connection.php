@@ -566,6 +566,8 @@
 						$value = "'".$value."'";
 					} else if($type == "boolean") {
 						$value = $value ? 1 : 0;
+					} else if($type == "array") {
+						$value = "('" . implode("', '", $value) . "')";
 					}
 
 					$tmpFilters[$arg] = $value;
