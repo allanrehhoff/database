@@ -33,6 +33,9 @@
 			/** @var string Last query attempted to be executed. */
 			public $lastQuery;
 
+			/** @var int Number When an array is passed as criteria this will be incremented for each value across all arrays */
+			private $arrayINCounter = 0;
+
 			/**
 			* Initiate a new database connection using PDO as a driver.
 			*
@@ -195,10 +198,11 @@
 						if(is_array($filter) === true) {
 							$tmparr = [];
 
-							foreach ($filter as $i => $item) {
-								$key = "val".$i;
+							foreach ($filter as $item) {
+								$key = "val".$this->arrayINCounter;
 								$tmparr[$key]  = $item;
 								$this->filters[$key] = $item;
+								$this->arrayINCounter++;
 							}
 
 							// (:val0, :val1, :val2)
