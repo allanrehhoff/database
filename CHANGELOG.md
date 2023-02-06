@@ -4,6 +4,7 @@ v4.0.0
 - Added Entity::search() method.  
 - Added magic method __isset to \Database\Entity
 - Added Database\Collection object, loading entities will now return a collection.  
+- Added more tests.  
 - Removed myself as author from docblocks.  
 - Some support for changing return types via PHP8 attributes.  
 - Database\Entity::load(); now throws a TypeError when wrong parameter given.  
