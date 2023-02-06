@@ -198,7 +198,7 @@
 						if(is_array($filter) === true) {
 							$tmparr = [];
 
-							foreach ($filter as $item) {
+							foreach($filter as $item) {
 								$key = "val".$this->arrayINCounter;
 								$tmparr[$key]  = $item;
 								$this->filters[$key] = $item;
@@ -323,12 +323,7 @@
 			*/
 			public function fetchCell(string $table, string $column, ?array $criteria = null) {
 				$sql = "SELECT `".$column."` FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
-				$result = $this->query($sql, $criteria)->fetchColumn(0);
-
-				// Convert false values to null
-				// If we were to pass a false value to Entity::__construct();
-				// self::crateRow(); will end up trying to insert '0 => :0'
-				return $result !== false ? $result : null;
+				return $this->query($sql, $criteria)->fetchColumn(0);
 			}
 
 			/**
@@ -337,7 +332,7 @@
 			* @see \Database\Connection::fetchCell();
 			*/
 			public function fetchField(string $table, string $column, ?array $criteria = null) {
-				return $this->fetchCell($table, $column, $criteria);
+				return $this->fetchCell(...func_get_args());
 			}
 
 			/**
@@ -557,7 +552,7 @@
 				$statement = $this->prepare($query);
 
 				$tmpFilters = [];
-				foreach ($this->filters as $column => $value) {
+				foreach($this->filters as $column => $value) {
 					if(substr($column, 0, 1) !== ':') {
 						$arg = ":".$column;
 					} else {
