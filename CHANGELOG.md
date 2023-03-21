@@ -1,6 +1,10 @@
 # Changelog #  
-v4.0.1
+v4.1.0
 - Added new Entity::from(string, mixed) method.  
+- Updating inline docblocks.  
+- Adding additional type hints to properties.  
+- Throw proper exceptions.  
+- Assign a default value of NULL to primary key.  
 
 v4.0.0
 - Added Entity::search() method.  
