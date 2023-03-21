@@ -17,7 +17,6 @@
 
 		/**
 		* Test instance works as expected
-		* @author Allan Thue Rehhoff
 		*/
 		public function testInstanceIsEntity() {
 			$entity = new Database\EntityType();
@@ -25,8 +24,26 @@
 		}
 
 		/**
+		 * Test we can load an EntityType using the ::from(); method
+		 */
+		public function testLoadingWithFromMethod() {
+			$entity = new Database\EntityType();
+			$entity->set([
+				"datetime_col" => date("Y-m-d H:i:s"),
+				"varchar_col" => "Yoda the great",
+				"text_col" => "Fear is the path to the dark side."
+			]);
+			$entity->save();
+
+			$loadedEntity = Database\EntityType::from("varchar_col", "Yoda the great");
+
+			$this->assertInstanceOf("Database\EntityType", $loadedEntity);
+			$this->assertTrue($loadedEntity->exists());
+			$this->assertEquals("Fear is the path to the dark side.", $loadedEntity->get("text_col"));
+		}
+
+		/**
 		* Test we're able to set and insert data, and able to read insert_id independent of EntityType
-		* @author Allan Thue Rehhoff
 		*/
 		public function testGetLastInsertIdAfterInsertEntityType() {
 			$entity = new Database\EntityType();
@@ -43,7 +60,6 @@
 		/**
 		* Test loading a single entity works
 		* @depends testGetLastInsertIdAfterInsertEntityType
-		* @author Allan Thue Rehhoff
 		*/
 		public function testStaticLoadSingleEntity() {
 			$entity = new Database\EntityType();
@@ -62,7 +78,6 @@
 
 		/**
 		* Inserts a new entity and loads it, validates the data integrity
-		* @author Allan Thue Rehhoff
 		*/
 		public function testInsertAndLoadEntity() {
 			$staticValue = "not_changed";
@@ -114,7 +129,6 @@
 		/**
 		* Inserts an entity and make sure it can be deleted.
 		* Hopefully this should only delete a single row
-		* @author Allan Thue Rehhoff
 		*/
 		public function testInsertAndDelete() {
 			$insert = new Database\EntityType();

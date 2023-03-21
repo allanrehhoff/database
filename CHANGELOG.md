@@ -1,4 +1,6 @@
 # Changelog #  
+v4.0.1
+- Added new Entity::from(string, mixed) method.  
 
 v4.0.0
 - Added Entity::search() method.  

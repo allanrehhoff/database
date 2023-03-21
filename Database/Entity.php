@@ -151,6 +151,22 @@ namespace Database {
 		}
 
 		/**
+		 * Loads an entity from a given field and value
+		 * @param string $field The database column/field to match
+		 * @param string $value The value that $field is to be matched against
+		 * @return Entity
+		 */
+		public static function from(string $field, mixed $value) : Entity {
+			$ID = Connection::getInstance()->fetchCell(static::getTableName(), static::getKeyField(), [
+				$field => $value
+			]);
+
+			$class = get_called_class();
+
+			return new $class($ID);
+		}
+
+		/**
 		 * Performs a search of the given criteria
 		 *
 		 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
