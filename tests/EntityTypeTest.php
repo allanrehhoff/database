@@ -20,7 +20,7 @@
 		*/
 		public function testInstanceIsEntity() {
 			$entity = new Database\EntityType();
-			$this->assertInstanceOf("Database\EntityType", $entity);
+			$this->assertInstanceOf(Database\EntityType::class, $entity);
 		}
 
 		/**
@@ -37,9 +37,13 @@
 
 			$loadedEntity = Database\EntityType::from("varchar_col", "Yoda the great");
 
-			$this->assertInstanceOf("Database\EntityType", $loadedEntity);
+			$this->assertInstanceOf(Database\EntityType::class, $loadedEntity);
 			$this->assertTrue($loadedEntity->exists());
 			$this->assertEquals("Fear is the path to the dark side.", $loadedEntity->get("text_col"));
+		}
+
+		public function testNewInstance() {
+			$this->assertInstanceOf(Database\EntityType::class, Database\EntityType::new());
 		}
 
 		/**
@@ -73,7 +77,7 @@
 			$testId = $this->db->fetchField("test_table", "test_id", ["varchar_col" => "somevalue"]);
 
 			$entity = Database\EntityType::load($testId);
-			$this->assertInstanceOf("Database\EntityType", $entity);
+			$this->assertInstanceOf(Database\EntityType::class, $entity);
 		}
 
 		/**
