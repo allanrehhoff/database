@@ -304,7 +304,6 @@
 
 		public function testFetchCellReturnsNullOnEmpty() {
 			$res = $this->db->fetchCell("movies", "movie_name", ["mid" => "-1"]);
-			$res = $this->db->fetchField("movies", "movie_name", ["mid" => "-1"]);
 			$this->assertNull($res);
 		}
 
