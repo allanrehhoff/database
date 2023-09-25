@@ -4,7 +4,6 @@
 	* Easily perform SQL queries without writing (more than neccesary) SQL.
 	* Credits to Mikkel Jensen & Victoria Hansen from whom I in cold blood have undeterred copied some of this code from.
 	*
-	* @author Allan Thue Rehhoff
 	* @version 3.2.1
 	*/
 	namespace Database {
