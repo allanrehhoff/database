@@ -149,7 +149,7 @@
 
 				$this->database = $database;
 
-				$this->tables = $this->query("SHOW TABLES")->fetchCol();
+				$this->tables = $this->query("SHOW TABLES")->fetchAll(\PDO::FETCH_COLUMN, 0);
 				$this->tables = array_flip($this->tables);
 			}
 
