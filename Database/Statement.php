@@ -23,11 +23,28 @@
 				return $result !== false ? $result : [];
 			}
 
-			public function fetchColumn(int $column = 0): mixed {
-				$result = parent::fetchColumn($column);
-
+			/**
+			 * Fetches the next row from a result set 
+			 * \PDOStatement::fetchColumn(); will return false
+			 * This method will make sure NULL may be return instead
+			 * @return mixed
+			 */
+			public function fetch(int $mode = PDO::FETCH_DEFAULT, int $cursorOrientation = PDO::FETCH_ORI_NEXT, int $cursorOffset = 0) : mixed {
+				$result = parent::fetch($mode, $cursorOrientation, $cursorOffset);
+				
 				// PDOStatement::fetchColumn(); will return false
 				// We'll normalise it to return null
+				return $result !== false ? $result : null;
+			}
+
+			/**
+			 * Fetch a column by numeric index from the resultset
+			 * \PDOStatement::fetchColumn(); will return false
+			 * This method will make sure NULL may be return instead
+			 * @return mixed
+			 */
+			public function fetchColumn(int $column = 0): mixed {
+				$result = parent::fetchColumn($column);
 				return $result !== false ? $result : null;
 			}
 		}

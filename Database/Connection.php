@@ -36,6 +36,12 @@
 			/** @var int Number When an array is passed as criteria this will be incremented for each value across all arrays */
 			protected int $arrayINCounter = 0;
 
+			/** @var string $database The database currently in use */
+			public string $database = '';
+
+			/** @var array $tables Whitelist of tables in initially selected database */
+			public array $tables = [];
+
 			/**
 			* Initiate a new database connection using PDO as a driver.
 			*
@@ -92,10 +98,11 @@
 			* @since 3.0
 			*/
 			public function connect(string $hostname, string $username, string $password, string $database) : Connection {
-				$this->dbh = new \PDO("mysql:host=".$hostname.";dbname=".$database, $username, $password);
+				$this->dbh = new \PDO("mysql:host=".$hostname, $username, $password);
 				$this->dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 				$this->dbh->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ["Database\Statement", [$this]]);
-				$this->dbh->query("SET NAMES utf8mb4");
+
+				$this->use($database);
 
 				return $this;
 			}
@@ -130,6 +137,21 @@
 			*/
 			public function getConnection() : Connection {
 				return $this;
+			}
+
+			/**
+			 * Switch database to use
+			 * @param string $database
+			 * @return void
+			 */
+			public function use(string $database) : void {
+				$this->query("USE ".$database);
+				$this->query("SET NAMES utf8mb4");
+
+				$this->database = $database;
+
+				$this->tables = $this->query("SHOW TABLES")->fetchCol();
+				$this->tables = array_flip($this->tables);
 			}
 
 			/**
@@ -275,26 +297,14 @@
 			* @todo Find out if this can be replaced by countQuery();
 			* @return int
 			*/
-			public function count(string $table, string $column, ?array $criteria = null) : int {
-				$sql = "SELECT COUNT(`".$column."`) AS total FROM `".$table."`";
+			public function count(string $table, ?array $criteria = null) : int {
+				$sql = "SELECT * FROM `".$this->safeTable($table)."`";
 
 				if($criteria != null) {
 					$sql .= ' WHERE ' . $this->keysToSql($criteria, 'AND');
 				}
 
-				return (int)$this->query($sql, $criteria)->fetch()->total;
-			}
-
-			/**
-			 * Count the results of a query
-			 * 
-			 * @param string $query the parameterized query
-			 * @param array $criteria Key value pairs to use with the query
-			 * @return int Row coutn
-			 */
-			public function countQuery(string $query, array $criteria = []) : int {
-				$result = $this->query($query, $criteria);
-				return (int)$result->rowCount();
+				return (int)$this->query($sql, $criteria)->rowCount();
 			}
 
 			/**
@@ -307,7 +317,7 @@
 			* @since 1.0
 			*/
 			public function fetchRow(string $table, ?array $criteria = null) : ?\stdClass {
-				$sql = "SELECT * FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
+				$sql = "SELECT * FROM `".$this->safeTable($table)."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
 				$row = $this->query($sql, $criteria)->fetch();
 				return  $row !== false ? $row : null;
 			}
@@ -322,8 +332,8 @@
 			* @since 1.0
 			*/
 			public function fetchCell(string $table, string $column, ?array $criteria = null) {
-				$sql = "SELECT `".$column."` FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
-				return $this->query($sql, $criteria)->fetchColumn(0);
+				$sql = "SELECT * FROM `".$this->safeTable($table)."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
+				return $this->query($sql, $criteria)->fetch()?->$column;
 			}
 
 			/**
@@ -331,8 +341,8 @@
 			*
 			* @see \Database\Connection::fetchCell();
 			*/
-			public function fetchField(string $table, string $column, ?array $criteria = null) {
-				return $this->fetchCell(...func_get_args());
+			public function fetchField(...$args) {
+				return $this->fetchCell(...$args);
 			}
 
 			/**
@@ -344,9 +354,11 @@
 			* @param array $criteria Criteria used to filter the rows.
 			* @return array Returns an array containing all the rows matching in the resultset
 			* @since 2.4
+			* @todo Inspect if this method can be replaced by \Database\Collection::getColumn();
+			*		To future me, keep in mind the provided solution should be able to handle large result sets
 			*/
 			public function fetchCol(string $table, string $column, ?array $criteria = null) : array {
-				$sql = "SELECT `".$column."` FROM `".$table."` WHERE ".$this->keysToSql($criteria, "AND");
+				$sql = "SELECT `".$column."` FROM `".$this->safeTable($table)."` WHERE ".$this->keysToSql($criteria, "AND");
 				return $this->query($sql, $criteria)->fetchCol();
 			}
 
@@ -359,7 +371,7 @@
 			* @since 1.0
 			*/
 			public function select(string $table, ?array $criteria = null) : array {
-				$sql = "SELECT * FROM ".$table." WHERE ".$this->keysToSql($criteria, "AND");
+				$sql = "SELECT * FROM ".$this->safeTable($table)." WHERE ".$this->keysToSql($criteria, "AND");
 				return $this->query($sql, $criteria)->fetchAll();
 			}
 
@@ -373,7 +385,7 @@
 			 * @since 3.1.3
 			 */
 			public function search(string $table, array $searches = [], ?array $criteria = null) : array {
-				$sql = "SELECT * FROM ".$table." WHERE ".implode(" AND ", $searches);
+				$sql = "SELECT * FROM ".$this->safeTable($table)." WHERE ".implode(" AND ", $searches);
 				return $this->query($sql, $criteria)->fetchAll();
 			}
 
@@ -401,7 +413,7 @@
 					$binds[] = implode(', ', $keys);
 				}
 
-				$sql = "INSERT INTO "."`$table` (`" . implode("`, `", array_keys($variables[0])) . "`) VALUES (" . implode("), (", $binds) . ")";
+				$sql = "INSERT INTO "."`".$this->safeTable($table)."` (`" . implode("`, `", array_keys($variables[0])) . "`) VALUES (" . implode("), (", $binds) . ")";
 
 				return $this->query($sql, $values);
 			}
@@ -467,7 +479,7 @@
 				foreach ($variables as $key => $value) $args["new_".$key] = $value;
 				foreach ($criteria as $key => $value) $args["old_".$key] = $value;
 				
-				$sql = "UPDATE `".$table."` SET ".$this->keysToSql($variables, ",", "new_")." WHERE ".$this->keysToSql($criteria, " AND ", "old_");
+				$sql = "UPDATE `".$this->safeTable($table)."` SET ".$this->keysToSql($variables, ",", "new_")." WHERE ".$this->keysToSql($criteria, " AND ", "old_");
 				return $this->query($sql, $args)->rowCount();
 			}
 
@@ -481,7 +493,7 @@
 			* @todo Return affected row count
 			*/
 			public function delete(string $table, ?array $criteria = null) : int {
-				$sql = "DELETE FROM `".$table."` WHERE ".$this->keysToSql($criteria, " AND");
+				$sql = "DELETE FROM `".$this->safeTable($table)."` WHERE ".$this->keysToSql($criteria, " AND");
 				return $this->query($sql, $criteria)->rowCount();
 			}
 
@@ -502,7 +514,7 @@
 					$binds[] = ":".$key;
 				}
 
-				$sql = $type . " INTO "."`$table` (`" . implode("`, `", array_keys($variables)) . "`) VALUES (" . implode(", ", $binds) . ")";
+				$sql = $type . " INTO "."`".$this->safeTable($table)."` (`" . implode("`, `", array_keys($variables)) . "`) VALUES (" . implode(", ", $binds) . ")";
 
 				return $sql;
 			}
@@ -596,6 +608,19 @@
 			*/
 			public function lastInsertId($seqname = null) : int {
 				return $this->dbh->lastInsertId($seqname);
+			}
+
+			/**
+			 * Checks if table name is safe and returns it.
+			 * @return string $table The table name to check
+			 * @throws \InvalidArgumentException
+			 */
+			public function safeTable(string $table) {
+				if(($this->tables[$table] ?? null) === null) {
+					throw new \InvalidArgumentException(sprintf("'%s' is not a valid table in %s",  $table, $this->database));
+				}
+
+				return $table;
 			}
 		}
 	}

@@ -171,7 +171,7 @@
 				]);
 			}
 
-			$res = self::$db->count("test_table", "test_id", ["varchar_col" => null]);
+			$res = self::$db->count("test_table", ["varchar_col" => null]);
 
 			$this->assertEquals($res, 2);
 		}
@@ -187,7 +187,7 @@
 				]);
 			}
 
-			$res = self::$db->count("test_table", "test_id", ["varchar_col" => 2]);
+			$res = self::$db->count("test_table", ["varchar_col" => 2]);
 
 			$this->assertEquals($res, 3);
 		}
@@ -203,8 +203,8 @@
 				]);
 			}
 
-			$true = self::$db->count("test_table", "test_id", ["varchar_col" => true]);
-			$false = self::$db->count("test_table", "test_id", ["varchar_col" => false]);
+			$true = self::$db->count("test_table", ["varchar_col" => true]);
+			$false = self::$db->count("test_table", ["varchar_col" => false]);
 
 			$this->assertEquals($true, 1);
 			$this->assertEquals($false, 1);
