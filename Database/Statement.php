@@ -1,9 +1,6 @@
 <?php
 	namespace Database {
-		use PDO;
-		use PDOStatement;
-
-		class Statement extends PDOStatement {
+		class Statement extends \PDOStatement {
 			/**
 			 * Dear future me, PDOStatement has no __construct() method
 			 * No need not to add a parent::__construct(); call in here
@@ -16,7 +13,7 @@
 			 * @return array
 			 */
 			public function fetchCol() : array {
-				$result = $this->fetchAll(PDO::FETCH_COLUMN);
+				$result = $this->fetchAll(\PDO::FETCH_COLUMN);
 				
 				// PHP < 8.0.0 compat. PDOStatement::fetchAll(); will return false
 				// if the result set was empty, fixed in PHP 8.0.0
@@ -29,7 +26,7 @@
 			 * This method will make sure NULL may be return instead
 			 * @return mixed
 			 */
-			public function fetch(int $mode = PDO::FETCH_DEFAULT, int $cursorOrientation = PDO::FETCH_ORI_NEXT, int $cursorOffset = 0) : mixed {
+			public function fetch(int $mode = \PDO::FETCH_DEFAULT, int $cursorOrientation = \PDO::FETCH_ORI_NEXT, int $cursorOffset = 0) : mixed {
 				$result = parent::fetch($mode, $cursorOrientation, $cursorOffset);
 				
 				// PDOStatement::fetchColumn(); will return false
