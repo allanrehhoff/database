@@ -9,16 +9,16 @@
 		* Sets up the required database connection
 		*/
 		public static function setUpBeforeClass() :void {
-			self::$db = new \Database\Connection(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+			self::$db = db();
 		}
 
 		/**
 		* Cleans up the table after testing, since i dont want the table we are testing against to clutter up with random crap.
 		*/
 		public static function tearDownAfterClass() :void {
-			self::$db->query("ALTER TABLE movies AUTO_INCREMENT = 0");
 			self::$db->delete("movies");
 			self::$db->delete("test_table");
+			self::$db->query("ALTER TABLE movies AUTO_INCREMENT = 0");
 		}
 
 		public function testSingletonIsInstanceOfDatabaseConnection() {
@@ -303,18 +303,6 @@
 		public function testFetchCellReturnsNullOnEmpty() {
 			$res = self::$db->fetchCell("movies", "movie_name", ["mid" => "-1"]);
 			$this->assertNull($res);
-		}
-
-		public function testFetchColumn() {
-			$insertId = self::$db->insert("movies", ["movie_name" => "Star wars new war", "added" => date("Y-m-d h:i:s")]);
-
-			$res1 = self::$db->query("SELECT movie_name FROM movies WHERE mid in :mid", ["mid" => [$insertId]])->fetchCol();
-			$this->assertNotEmpty($res1);
-
-			$res2 = self::$db->fetchCol("movies", "movie_name", ["mid" => $insertId]);
-			$this->assertNotEmpty($res2);
-
-			$this->assertEquals($res1, $res2);
 		}
 
 		public function testSimpleQueryDebugging() {

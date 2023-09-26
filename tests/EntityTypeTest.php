@@ -3,16 +3,22 @@
 	* Tests Entity class against various common use cases
 	*/
 	class EntityTypeTest extends PHPUnit\Framework\TestCase {
-		public function setUp() :void {
-			try {
-				$this->db = new Database\Connection(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-			} catch(Exception $e) {
-				$this->fail("Unable to setup tests, perhaps you forgot to configure database credentials.");
-			}
+		private static $db;
+
+		/**
+		* Sets up the required database connection
+		*/
+		public static function setUpBeforeClass() :void {
+			self::$db = db();
 		}
 
-		public function tearDown() :void {
-			$this->db->query("TRUNCATE test_table");
+		/**
+		* Cleans up the table after testing, since i dont want the table we are testing against to clutter up with random crap.
+		*/
+		public static function tearDownAfterClass() :void {
+			self::$db->delete("movies");
+			self::$db->delete("test_table");
+			self::$db->query("ALTER TABLE movies AUTO_INCREMENT = 0");
 		}
 
 		/**
@@ -57,7 +63,7 @@
 			] );
 			$entity->save();
 
-			$this->assertGreaterThan(0, $this->db->lastInsertId());
+			$this->assertGreaterThan(0, self::$db->lastInsertId());
 		}
 
 		/**
@@ -73,7 +79,7 @@
 			]);
 			$entity->save();
 
-			$testId = $this->db->fetchField("test_table", "test_id", ["varchar_col" => "somevalue"]);
+			$testId = self::$db->fetchField("test_table", "test_id", ["varchar_col" => "somevalue"]);
 
 			$entity = Database\EntityType::load($testId);
 			$this->assertInstanceOf(Database\EntityType::class, $entity);
@@ -98,7 +104,7 @@
 			]);
 			$insert_id = $entity->save();
 
-			$this->assertEquals($insert_id, $this->db->lastInsertId());
+			$this->assertEquals($insert_id, self::$db->lastInsertId());
 			$loadedEntity = new Database\EntityType($insert_id);
 
 			$this->assertNotEmpty($loadedEntity);
