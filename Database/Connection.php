@@ -4,9 +4,13 @@
 	* Easily perform SQL queries without writing (more than neccesary) SQL.
 	* Credits to Mikkel Jensen & Victoria Hansen from whom I in cold blood have undeterred copied some of this code from.
 	*
-	* @version 3.2.1
+	* @version 4.0.0
 	*/
 	namespace Database {
+
+		/**
+		 * Base cpmmectopm class
+		 */
 		class Connection {
 			/** @var boolean True if a transaction has started, false otherwise. */
 			protected $transactionStarted = false;
@@ -316,9 +320,10 @@
 			* @since 1.0
 			*/
 			public function fetchRow(string $table, ?array $criteria = null) : ?\stdClass {
-				$sql = "SELECT * FROM `".$this->safeTable($table)."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
-				$row = $this->query($sql, $criteria)->fetch();
-				return  $row !== false ? $row : null;
+				//$sql = "SELECT * FROM `".$this->safeTable($table)."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
+				//$row = $this->query($sql, $criteria)->fetch();
+				//return  $row !== false ? $row : null;
+				return $this->select($table, $criteria)->getFirst();
 			}
 
 			/**
@@ -331,8 +336,9 @@
 			* @since 1.0
 			*/
 			public function fetchCell(string $table, string $column, ?array $criteria = null) {
-				$sql = "SELECT * FROM `".$this->safeTable($table)."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
-				return $this->query($sql, $criteria)->fetch()?->$column;
+				//$sql = "SELECT * FROM `".$this->safeTable($table)."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
+				return $this->select($table, $criteria)->getColumn($column)[0] ?? null;
+				//return $this->query($sql, $criteria)->fetch()?->$column;
 			}
 
 			/**
@@ -345,33 +351,16 @@
 			}
 
 			/**
-			* Fetches a column of values from the given table.
-			* This function will always return an array.
-			*
-			* @param string $table Name of the table containing the rows to be fetched
-			* @param string $column Column name in $table where value should be returned from.
-			* @param array $criteria Criteria used to filter the rows.
-			* @return array Returns an array containing all the rows matching in the resultset
-			* @since 2.4
-			* @todo Inspect if this method can be replaced by \Database\Collection::getColumn();
-			*		To future me, keep in mind the provided solution should be able to handle large result sets
-			*/
-			public function fetchCol(string $table, string $column, ?array $criteria = null) : array {
-				$sql = "SELECT `".$column."` FROM `".$this->safeTable($table)."` WHERE ".$this->keysToSql($criteria, "AND");
-				return $this->query($sql, $criteria)->fetchCol();
-			}
-
-			/**
 			* Select rows based on the given criteria
 			*
 			* @param string $table Name of the table to query
 			* @param array $criteria column => value pairs to filter the query results
-			* @return array
+			* @return Collection
 			* @since 1.0
 			*/
-			public function select(string $table, ?array $criteria = null) : array {
+			public function select(string $table, ?array $criteria = null) : Collection {
 				$sql = "SELECT * FROM ".$this->safeTable($table)." WHERE ".$this->keysToSql($criteria, "AND");
-				return $this->query($sql, $criteria)->fetchAll();
+				return new Collection($this->query($sql, $criteria)->fetchAll());
 			}
 
 			/**
@@ -380,12 +369,12 @@
 			 * @param string $table Name of the table to search
 			 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
 			 * @param ?array $criteria Criteria variables for the search sets
-			 * @return array
+			 * @return Collection
 			 * @since 3.1.3
 			 */
-			public function search(string $table, array $searches = [], ?array $criteria = null) : array {
+			public function search(string $table, array $searches = [], ?array $criteria = null) : Collection {
 				$sql = "SELECT * FROM ".$this->safeTable($table)." WHERE ".implode(" AND ", $searches);
-				return $this->query($sql, $criteria)->fetchAll();
+				return new Collection($this->query($sql, $criteria)->fetchAll());
 			}
 
 			/**
@@ -475,10 +464,10 @@
 			public function update(string $table, ?array $variables, ?array $criteria = null) : int {
 				$args = [];
 
-				foreach ($variables as $key => $value) $args["new_".$key] = $value;
-				foreach ($criteria as $key => $value) $args["old_".$key] = $value;
+				foreach($variables as $key => $value) $args["new_".$key] = $value;
+				foreach($criteria as $key => $value) $args["old_".$key] = $value;
 				
-				$sql = "UPDATE `".$this->safeTable($table)."` SET ".$this->keysToSql($variables, ",", "new_")." WHERE ".$this->keysToSql($criteria, " AND ", "old_");
+				$sql = "UPDATE `" . $this->safeTable($table) . "` SET " . $this->keysToSql($variables, ",", "new_") . " WHERE " . $this->keysToSql($criteria, " AND ", "old_");
 				return $this->query($sql, $args)->rowCount();
 			}
 
