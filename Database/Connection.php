@@ -320,9 +320,6 @@
 			* @since 1.0
 			*/
 			public function fetchRow(string $table, ?array $criteria = null) : ?\stdClass {
-				//$sql = "SELECT * FROM `".$this->safeTable($table)."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
-				//$row = $this->query($sql, $criteria)->fetch();
-				//return  $row !== false ? $row : null;
 				return $this->select($table, $criteria)->getFirst();
 			}
 
@@ -336,10 +333,7 @@
 			* @since 1.0
 			*/
 			public function fetchCell(string $table, string $column, ?array $criteria = null) {
-				//$sql = "SELECT * FROM `".$this->safeTable($table)."` WHERE ".$this->keysToSql($criteria, "AND")." LIMIT 1";
-				return $this->select($table, $criteria)->getColumn($column)[0] ?? null;
-				//return $this->query($sql, $criteria)->fetch()?->$column;
-			}
+				return $this->select($table, $criteria)->getColumn($column)[0] ?? null;			}
 
 			/**
 			* Alias of \Database\Connection::fetchCell implemented for the drupal developers sake.
