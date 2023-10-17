@@ -4,3 +4,4 @@ error_log
 /vendor/
 .phpunit.result.cache
 dev.php
+composer.lock
