@@ -5,6 +5,7 @@
 namespace Database {
 	/**
 	 * Represents a CRUD'able entity.
+	 * @phpstan-consistent-constructor
 	 */
 	abstract class Entity {
 		/**
@@ -119,10 +120,10 @@ namespace Database {
 		/**
 		 * Update or insert row
 		 * 
-		 * @return Database\Statement
+		 * @return Statement
 		 */
 		public function upsert() : Statement {
-			return Connection::getInstance()->upsert($this->getTableName(), $this->data, $this->getKeyFilter());
+			return Connection::getInstance()->upsert($this->getTableName(), $this->data);
 		}
 
 		/**
@@ -137,8 +138,8 @@ namespace Database {
 		/**
 		* Make a given value safe for insertion, could prevent future XSS injections
 		*
-		* @param string Key of the data value to retrieve
-		* @return string a html friendly string
+		* @param string $key Key of the data value to retrieve
+		* @return ?string A html friendly string
 		*/
 		public function safe(string $key) : ?string {
 			$data = $this->get($key);
@@ -153,7 +154,7 @@ namespace Database {
 		*
 		* @param mixed $rows an array of ID's or a single ID to load
 		* @param bool $indexByIDs If loading multiple ID's set this to true, to index the resulting array by entity IDs
-		* @return mixed The loaded entities
+		* @return Collection|Entity The loaded entities or a single if no array was provided
 		* @throws \TypeError
 		*/
 		public static function load(mixed $rows, bool $indexByIDs = true) : Collection|Entity {
@@ -172,8 +173,6 @@ namespace Database {
 			} else {
 				return new $class($rows);
 			}
-
-			throw new \InvalidArgumentException($class."::load(); expects either an array or integer. '".gettype($rows)."' was provided.");
 		}
 
 		/**
@@ -181,7 +180,7 @@ namespace Database {
 		 *
 		 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
 		 * @param ?array $criteria Criteria variables for the search sets
-		 * @return array
+		 * @return Collection|Entity
 		 * @since 3.3.0
 		 */
 		public static function search(array $searches = [], ?array $criteria = null) : Collection|Entity {
@@ -211,9 +210,9 @@ namespace Database {
 		/**
 		* Sets ones or more properties to a given value.
 		*
-		* @param array $values key => value pairs of values to set
+		* @param null|array|object $data key => value pairs of values to set
 		* @param ?array $allowedFields keys of fields allowed to be altered
-		* @return object The current entity instance
+		* @return Entity The current entity instance
 		*/
 		public function set(null|array|object $data = null, ?array $allowedFields = null) : Entity {
 			if($data !== null) {
@@ -239,7 +238,7 @@ namespace Database {
 					$data = array_intersect_key($data, array_flip($allowedFields));
 				}
 
-				$data = array_merge($this->data, $data ?? []);
+				$data = array_merge($this->data, $data);
 			}
 
 			$this->data = $data ?? [];
