@@ -541,8 +541,8 @@
 			* @return string The interpolated query.
 			* @since 2.4
 			*/
-			public function debugQuery(string $query, array $filters) : string {
-				$this->filters 	 = $filters;
+			public function debugQuery(string $query, ?array $filters) : string {
+				$this->filters 	 = $filters ?? [];
 				$statement = $this->prepare($query);
 
 				$tmpFilters = [];
