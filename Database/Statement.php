@@ -14,7 +14,7 @@ namespace Database {
 		 * 
 		 * @return array
 		 */
-		public function fetchCol() : array {
+		public function fetchCol(): array {
 			$result = $this->fetchAll(\PDO::FETCH_COLUMN);
 			
 			// PHP < 8.0.0 compat. PDOStatement::fetchAll(); will return false
@@ -23,12 +23,14 @@ namespace Database {
 		}
 
 		/**
-		 * Fetches the next row from a result set 
-		 * \PDOStatement::fetchColumn(); will return false
-		 * This method will make sure NULL may be return instead
-		 * @return mixed
+		 * Fetches the next row from a result set.
+		 * \PDOStatement::fetchColumn(); will return false.
+		 * This method will make sure NULL may be return instead.
+		 * 
+		 * @inheritdoc
+		 * @return mixed The return value of this function on success depends on the fetch type. In all cases, NULL is returned on failure.
 		 */
-		public function fetch(int $mode = \PDO::FETCH_DEFAULT, int $cursorOrientation = \PDO::FETCH_ORI_NEXT, int $cursorOffset = 0) : mixed {
+		public function fetch(int $mode = \PDO::FETCH_DEFAULT, int $cursorOrientation = \PDO::FETCH_ORI_NEXT, int $cursorOffset = 0): mixed {
 			$result = parent::fetch($mode, $cursorOrientation, $cursorOffset);
 			
 			// PDOStatement::fetchColumn(); will return false
@@ -37,10 +39,12 @@ namespace Database {
 		}
 
 		/**
-		 * Fetch a column by numeric index from the resultset
-		 * \PDOStatement::fetchColumn(); will return false
-		 * This method will make sure NULL may be return instead
-		 * @return mixed
+		 * Fetch a column by numeric index from the resultset.
+		 * \PDOStatement::fetchColumn(); will return false.
+		 * This method will make sure NULL may be return instead.
+		 * 
+		 * @inheritdoc
+		 * @return mixed The return value of this function on success depends on the fetch type. In all cases, NULL is returned on failure.
 		 */
 		public function fetchColumn(int $column = 0): mixed {
 			$result = parent::fetchColumn($column);
