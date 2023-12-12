@@ -66,7 +66,7 @@ namespace Database {
 		 * @param mixed $key Array/object key to fetch values from.
 		 * @return \Database\Collection
 		 */
-		public function getColumn($key): Collection {
+		public function getColumn(mixed $key): Collection {
 			return new self(array_column($this->items, $key));
 		}
 
@@ -129,32 +129,32 @@ namespace Database {
 		/**
 		 * Determine if an item exists at an offset.
 		 *
-		 * @param mixed $key
+		 * @param mixed $key The offset to check at.
 		 * @return bool
 		 */
-		public function offsetExists($key): bool {
+		public function offsetExists(mixed $key): bool {
 			return isset($this->items[$key]);
 		}
 
 		/**
 		 * Get an item at a given offset.
 		 *
-		 * @param mixed $key
+		 * @param mixed $key The key to get value from
 		 * @return mixed
 		 */
 		#[\ReturnTypeWillChange]
-		public function offsetGet($key): mixed {
+		public function offsetGet(mixed $key): mixed {
 			return $this->items[$key];
 		}
 
 		/**
 		 * Set the item at a given offset.
 		 *
-		 * @param mixed $key
-		 * @param mixed $value
+		 * @param mixed $key The key to set value at
+		 * @param mixed $value The value to set for key
 		 * @return void
 		 */
-		public function offsetSet($key, $value): void {
+		public function offsetSet(mixed $key, mixed $value): void {
 			if (is_null($key)) {
 				$this->items[] = $value;
 			} else {
@@ -165,10 +165,10 @@ namespace Database {
 		/**
 		 * Unset the item at a given offset.
 		 *
-		 * @param mixed $key
+		 * @param mixed $key Remove value at this key.
 		 * @return void
 		 */
-		public function offsetUnset($key): void {
+		public function offsetUnset(mixed $key): void {
 			unset($this->items[$key]);
 		}
 

@@ -17,10 +17,10 @@ namespace Database {
 		/** @var object  The singleton instance of the this class. */
 		protected static $singletonInstance;
 
-		/** @var ?\PDO PDO Database handle */
+		/** @var null|\PDO PDO Database handle */
 		protected ?\PDO $dbh;
 
-		/** @var ?array Filters to prepare before querying */
+		/** @var null|array Filters to prepare before querying */
 		protected ?array $filters = [];
 
 		/** @var ?Statement Holds the last prepared statement after execution. */
@@ -198,7 +198,7 @@ namespace Database {
 		/**
 		 * Rolls back the current transaction
 		 *
-		 * @throws \PDOException
+		 * @throws \PDOException When attempting a rollback while not in a transaction.
 		 * @return boolean
 		 * @since 1.3
 		 */
@@ -215,7 +215,7 @@ namespace Database {
 		 *
 		 * @param string $sql The parameterized SQL string to query against the database
 		 * @param array $driverOptions Arguments to pass along with the query
-		 * @throws \PDOException On failure to prepare statement
+		 * @throws \PDOException On failure to prepare statement.
 		 * @return Statement|false Returns a prepared SQL statement, instance of Database\Statement, false on failure
 		 * @since 2.3
 		 */
@@ -276,7 +276,7 @@ namespace Database {
 		 * @param array $filters Arguments to pass along with the query.
 		 * @param int $fetchMode Set fetch mode for the query performed. Must be one of PDO::FETCH_* default is PDO::FETCH_OBJECT
 		 * @since 1.0 
-		 * @throws \PDOException
+		 * @throws \PDOException On error if PDO::ERRMODE_EXCEPTION option is true.
 		 * @return Statement
 		 */
 		public function query(string $sql, ?array $filters = null, int $fetchMode = \PDO::FETCH_OBJ): Statement {
@@ -343,13 +343,12 @@ namespace Database {
 		/**
 		* Alias of \Database\Connection::fetchCell implemented for the drupal developers sake.
 		*
-		* @param string $table Name of the table containing the row to be fetched
-		* @param string $column Column name in $table where cell value will be returned
-		* @param array $criteria Criteria used to filter the rows.
+		* @deprecated Use fetchCell instead.  
+		* @param mixed ...$args See fetchCell.
 		* @return mixed Returns a single column from the next row of a result set or FALSE if there are no rows.
 		* @since 1.0
 		*/
-		public function fetchField(...$args): mixed {
+		public function fetchField(mixed ...$args): mixed {
 			return $this->fetchCell(...$args);
 		}
 
@@ -370,8 +369,8 @@ namespace Database {
 		 * Performs a search of the given criteria
 		 * 
 		 * @param string $table Name of the table to search
-		 * @param ?array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
-		 * @param ?array $criteria Criteria variables for the search sets
+		 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
+		 * @param null|array $criteria Criteria variables for the search sets
 		 * @return Collection
 		 * @since 3.1.3
 		 */
@@ -384,7 +383,7 @@ namespace Database {
 		 * Inserts multiple rows in a single query
 		 * 
 		 * @param string $table Table to insert into
-		 * @param ?array $variables Multidimensional with associative sub-arrays to insert
+		 * @param null|array $variables Multidimensional with associative sub-arrays to insert
 		 * @return Statement
 		 */
 		public function insertMultiple(string $table, ?array $variables = null): Statement {
@@ -413,7 +412,7 @@ namespace Database {
 		 * Inserts a row in the given table.
 		 *
 		 * @param string $table Name of the table to insert the row in
-		 * @param ?array $variables Column => Value pairs to be inserted
+		 * @param null|array $variables Column => Value pairs to be inserted
 		 * @return int The last inserted ID
 		 * @since 1.0
 		 */
@@ -428,7 +427,7 @@ namespace Database {
 		 * Already existing rows with matching PRIMARY key or UNIQUE index are deleted and then re-inserted.
 		 *
 		 * @param string $table Name of the table to replace into
-		 * @param ?array $variables Column => Value pairs to be inserted
+		 * @param null|array $variables Column => Value pairs to be inserted
 		 * @return int The last inserted ID
 		 * @since 1.0
 		 */
@@ -442,7 +441,7 @@ namespace Database {
 		 * Update or insert row, uses ON DUPLICATE KEY syntax
 		 * 
 		 * @param string $table Table to update or insert again
-		 * @param ?array $variables column => value pairs to insert/update
+		 * @param null|array $variables column => value pairs to insert/update
 		 * @return Statement
 		 * @since 3.2.0
 		 */
@@ -459,7 +458,7 @@ namespace Database {
 		 *
 		 * @param string $table Name of the table to update rows in
 		 * @param array $variables Column => Value pairs containg the new values for the row
-		 * @param ?array $criteria Array of criterie for updating a row
+		 * @param null|array $criteria Array of criterie for updating a row
 		 * @return int Number of affected rows
 		 * @since 1.0
 		 */
@@ -477,7 +476,7 @@ namespace Database {
 		 * Delete rows from the given table by criteria.
 		 *
 		 * @param string $table Table to delete rows from
-		 * @param ?array $criteria Criteria for deletion
+		 * @param null|array $criteria Criteria for deletion
 		 * @return int Number of rows affected.
 		 * @since 1.0
 		 */
@@ -491,7 +490,7 @@ namespace Database {
 		 *
 		 * @param string $type SQL operator to with the INTO can be either INSERT or REPLACE
 		 * @param string $table Table to insert/replace the row in.
-		 * @param ?array $variables Column => Value pairs to insert.
+		 * @param null|array $variables Column => Value pairs to insert.
 		 * @return string The last inserted ID
 		 * @since 1.0
 		 */
@@ -512,7 +511,7 @@ namespace Database {
 		 * Internal function to convert column=>value pairs into SQL.
 		 * If a parameter value is an array, it will be treated as such, using the IN operator.
 		 *
-		 * @param array $array Array of arguments to parse (You sure yet that it's an array?)
+		 * @param null|array $array Array of arguments to parse (You sure yet that it's an array?)
 		 * @param string $seperator String seperator to seperate the pairs with
 		 * @param string $variablePrefix string to use for prefixing values in the SQL
 		 * @return string
@@ -616,7 +615,7 @@ namespace Database {
 		 * Checks if table name is safe and returns it.
 		 * @param string $table Table name to assert exists
 		 * @return string $table The table name to check
-		 * @throws \InvalidArgumentException If table name provided does not exists
+		 * @throws \InvalidArgumentException If table name provided does not exists.
 		 */
 		public function safeTable(string $table) {
 			if(($this->tables[$table] ?? null) === null) {

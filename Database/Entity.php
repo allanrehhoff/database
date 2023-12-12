@@ -38,7 +38,7 @@ namespace Database {
 		 * Loads a given entity, usually by an ID. Instantiates a new if none given.
 		 *
 		 * @param mixed $data Can be either an array of existing data or an entity ID to load.
-		 * @param ?array $allowedFields Fields allowed to be set as data
+		 * @param null|array $allowedFields Fields allowed to be set as data
 		 * @return void
 		 */
 		public function __construct(mixed $data = null, ?array $allowedFields = null) {
@@ -71,7 +71,7 @@ namespace Database {
 		* @param mixed $value A value to set
 		* @return void
 		*/
-		public function __set(string $name, $value) {
+		public function __set(string $name, mixed $value) {
 			$this->data[$name] = $value;
 		}
 
@@ -80,10 +80,11 @@ namespace Database {
 		 * This is required together with __get for
 		 * to support 'array_column' in \Database\Collection::getColumn
 		 *
+		 * @param string $name Name of the data index to check.
 		 * @since 3.3.0
 		 * @return bool
 		 */
-		public function __isset($name): bool {
+		public function __isset(string $name): bool {
 			return isset($this->data[$name]);
 		}
 
@@ -102,7 +103,7 @@ namespace Database {
 		* Saves the entity to a long term storage.
 		* Empty strings are converted to null values
 		*
-		* @throws \Throwable
+		* @throws \BadMethodCallException If attempting to do an insert and data array is empty.
 		* @return mixed if a new entity was just inserted, returns the primary key for that entity, otherwise the current data is returned
 		*/
 		#[\ReturnTypeWillChange]
@@ -155,7 +156,6 @@ namespace Database {
 		 * @param mixed $rows an array of ID's or a single ID to load
 		 * @param bool $indexByIDs If loading multiple ID's set this to true, to index the resulting array by entity IDs
 		 * @return Collection|Entity The loaded entities or a single if no array was provided
-		 * @throws \TypeError
 		 */
 		public static function load(mixed $rows, bool $indexByIDs = true): Collection|Entity {
 			$class = static::class;
@@ -179,7 +179,7 @@ namespace Database {
 		 * Performs a search of the given criteria
 		 *
 		 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
-		 * @param ?array $criteria Criteria variables for the search sets
+		 * @param null|array $criteria Criteria variables for the search sets
 		 * @return Collection|Entity
 		 * @since 3.3.0
 		 */
@@ -191,7 +191,7 @@ namespace Database {
 		/**
 		 * Loads an entity from a given field and value
 		 * @param string $field The database column/field to match
-		 * @param string $value The value that $field is to be matched against
+		 * @param mixed $value The value that $field is to be matched against
 		 * @return Entity
 		 */
 		public static function from(string $field, mixed $value): Entity {
@@ -211,7 +211,7 @@ namespace Database {
 		* Sets ones or more properties to a given value.
 		*
 		* @param null|array|object $data key => value pairs of values to set
-		* @param ?array $allowedFields keys of fields allowed to be altered
+		* @param null|array $allowedFields keys of fields allowed to be altered
 		* @return Entity The current entity instance
 		*/
 		public function set(null|array|object $data = null, ?array $allowedFields = null): Entity {
