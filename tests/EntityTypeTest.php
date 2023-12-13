@@ -44,7 +44,7 @@
 			]);
 			$entity->save();
 
-			$loadedEntity = Database\EntityType::from("varchar_col", "Yoda the great");
+			$loadedEntity = Database\EntityType::from($entity->id());
 
 			$this->assertInstanceOf(Database\EntityType::class, $loadedEntity);
 			$this->assertTrue($loadedEntity->exists());
@@ -79,9 +79,9 @@
 			]);
 			$entity->save();
 
-			$testId = self::$db->fetchField("test_table", "test_id", ["varchar_col" => "somevalue"]);
+			$testData = self::$db->fetchRow("test_table", ["varchar_col" => "somevalue"]);
 
-			$entity = Database\EntityType::load($testId);
+			$entity = Database\EntityType::load($testData);
 			$this->assertInstanceOf(Database\EntityType::class, $entity);
 		}
 
@@ -96,7 +96,7 @@
 
 			$integrity = md5($staticValue.$varcharColValue.$textColValue);
 
-			$entity = new Database\EntityType();
+			$entity = Database\EntityType::new();
 			$entity->set([
 				"varchar_col" => $varcharColValue,
 				"text_col" => $textColValue,
@@ -105,34 +105,12 @@
 			$insert_id = $entity->save();
 
 			$this->assertEquals($insert_id, self::$db->lastInsertId());
-			$loadedEntity = new Database\EntityType($insert_id);
+			$loadedEntity = Database\EntityType::from($insert_id);
 
 			$this->assertNotEmpty($loadedEntity);
 
 			$loadedIntegrity = md5($staticValue.$loadedEntity->varchar_col.$loadedEntity->text_col);
 			$this->assertEquals($integrity, $loadedIntegrity);
-		}
-
-		/**
-		* Test we're able to load more than one entity at a time
-		*/
-		public function testLoadMultipleEntityTypes() {
-			$ids = [];
-
-			// Insert a bunch of test data
-			$numberItems =  mt_rand(1, 5);
-			for ($i=0; $i < $numberItems; $i++) { 
-				$entity = new Database\EntityType();
-				$entity->set([
-					"varchar_col" => "value".$i,
-					"text_col" => "longvalue ".$i,
-					"datetime_col" => date("Y-m-d h:i:s")
-				]);
-				$ids[] = $entity->save();
-			}
-
-			$entities = Database\EntityType::load($ids);
-			$this->assertEquals(count($entities), $numberItems);
 		}
 
 		/**
@@ -148,7 +126,7 @@
 			])->save();
 			$insert_id = $insert->id();
 
-			$loaded = Database\EntityType::load($insert_id);
+			$loaded = Database\EntityType::from($insert_id);
 			$this->assertNotEmpty($loaded);
 
 			$this->assertEquals(1, $loaded->delete());
