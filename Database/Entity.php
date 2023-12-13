@@ -10,7 +10,8 @@ namespace Database {
 	abstract class Entity {
 		/**
 		 * All loaded entities will br stored for the remainder of the request
-		 * @var array $instanceCache	
+		 * @var array $instanceCache
+		 * @since v5.0.0
 		 */
 		private static array $instanceCache = [];
 
