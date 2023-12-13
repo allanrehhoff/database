@@ -49,12 +49,6 @@ namespace Database {
 		 * @return void
 		 */
 		public function __construct(mixed $data = null, ?array $allowedFields = null) {
-			///if (gettype($data) === "string" || gettype($data) === "integer") {
-			///	$keyField = static::getKeyField();
-			///	$exists = Connection::getInstance()->fetchRow(static::getTableName(), [$keyField => $data]);
-			///	$data = (array) $exists;
-			///}
-
 			$this->set($data, $allowedFields);
 		}
 
@@ -111,10 +105,9 @@ namespace Database {
 		* Empty strings are converted to null values
 		*
 		* @throws \BadMethodCallException If attempting to do an insert and data array is empty.
-		* @return mixed if a new entity was just inserted, returns the primary key for that entity, otherwise the current data is returned
+		* @return int|string|static if a new entity was just inserted, returns the primary key for that entity, otherwise the current data is returned
 		*/
-		#[\ReturnTypeWillChange]
-		public function save(): mixed {
+		public function save(): int|string|static {
 			if($this->exists() === true) {
 				Connection::getInstance()->update($this->getTableName(), $this->data, $this->getKeyFilter());
 				$result = $this->data;
@@ -152,7 +145,7 @@ namespace Database {
 		* Make a given value safe for insertion, could prevent future XSS injections
 		*
 		* @param string $key Key of the data value to retrieve
-		* @return ?string A html friendly string
+		* @return null|string A html friendly string
 		*/
 		public function safe(string $key): ?string {
 			$data = $this->get($key);
@@ -166,9 +159,9 @@ namespace Database {
 		 * Queries database for a given entity by the value of its primary key.
 		 * 
 		 * @param int|string $identifier The value of the entity's primary key. 
-		 * @return Entity The loaded entity, empty entity if not exists
+		 * @return static The loaded entity, empty entity if not exists
 		 */
-		public static function from(int|string $identifier): Entity {
+		public static function from(int|string $identifier): static {
 			$entityType = static::class;
 		
 			if (!isset(self::$instanceCache[$entityType][$identifier])) {
@@ -192,9 +185,9 @@ namespace Database {
 		 *
 		 * @param mixed $rows an array of ID's or a single ID to load
 		 * @param bool $indexByIDs If loading multiple ID's set this to true, to index the resulting array by entity IDs
-		 * @return Collection|Entity The loaded entities or a single if no array was provided
+		 * @return Collection|static The loaded entities or a single if no array was provided
 		 */
-		public static function load(mixed $rows, bool $indexByIDs = true): Collection|Entity {
+		public static function load(mixed $rows, bool $indexByIDs = true): Collection|static {
 			$class = static::class;
 
 			if (is_iterable($rows)) {
@@ -217,24 +210,13 @@ namespace Database {
 		 *
 		 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
 		 * @param null|array $criteria Criteria variables for the search sets
-		 * @return Collection|Entity
+		 * @return Collection|static
 		 * @since 3.3.0
 		 */
-		public static function search(array $searches = [], ?array $criteria = null): Collection|Entity {
+		public static function search(array $searches = [], ?array $criteria = null): Collection|static {
 			$rows = Connection::getInstance()->search(static::getTableName(), $searches, $criteria);
 			return self::load($rows);
 		}
-
-		/**
-		 * Loads an entity from a given field and value
-		 * @param string $field The database column/field to match
-		 * @param mixed $value The value that $field is to be matched against
-		 * @return Entity
-		 */
-		//public static function from(string $field, mixed $value): Entity {
-		//	$row = Connection::getInstance()->fetchRow(static::getTableName(), [$field => $value]);
-		//	return new static($row);
-		//}
 
 		/**
 		 * Creates a new instance of any given entity
@@ -249,9 +231,9 @@ namespace Database {
 		*
 		* @param null|array|object $data key => value pairs of values to set
 		* @param null|array $allowedFields keys of fields allowed to be altered
-		* @return Entity The current entity instance
+		* @return static The current entity instance
 		*/
-		public function set(null|array|object $data = null, ?array $allowedFields = null): Entity {
+		public function set(null|array|object $data = null, ?array $allowedFields = null): static {
 			if($data !== null) {
 				// Convert object to array
 				// So we can merge it later
