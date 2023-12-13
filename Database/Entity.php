@@ -9,6 +9,12 @@ namespace Database {
 	 */
 	abstract class Entity {
 		/**
+		 * All loaded entities will br stored for the remainder of the request
+		 * @var array $instanceCache	
+		 */
+		private static array $instanceCache = [];
+
+		/**
 		 * @var mixed $key Value of the primary key field
 		 */
 		private mixed $key = null;
@@ -35,18 +41,19 @@ namespace Database {
 		abstract protected static function getTableName(): string;
 
 		/**
-		 * Loads a given entity, usually by an ID. Instantiates a new if none given.
+		 * Loads a given entity and populates it with the given data.
+		 * Use static::from(); to load a new entity by its primary key.
 		 *
 		 * @param mixed $data Can be either an array of existing data or an entity ID to load.
-		 * @param null|array $allowedFields Fields allowed to be set as data
+		 * @param null|array $allowedFields Fields allowed to be set as data.
 		 * @return void
 		 */
 		public function __construct(mixed $data = null, ?array $allowedFields = null) {
-			if (gettype($data) === "string" || gettype($data) === "integer") {
-				$keyField = static::getKeyField();
-				$exists = Connection::getInstance()->fetchRow(static::getTableName(), [$keyField => $data]);
-				$data = (array) $exists;
-			}
+			///if (gettype($data) === "string" || gettype($data) === "integer") {
+			///	$keyField = static::getKeyField();
+			///	$exists = Connection::getInstance()->fetchRow(static::getTableName(), [$keyField => $data]);
+			///	$data = (array) $exists;
+			///}
 
 			$this->set($data, $allowedFields);
 		}
@@ -110,12 +117,17 @@ namespace Database {
 		public function save(): mixed {
 			if($this->exists() === true) {
 				Connection::getInstance()->update($this->getTableName(), $this->data, $this->getKeyFilter());
-				return $this->data;
+				$result = $this->data;
 			} else {
 				if(empty($this->data)) throw new \BadMethodCallException("Data variable is empty");
 				$this->key = Connection::getInstance()->insert($this->getTableName(), $this->data);
-				return $this->key;
+				$result = $this->key;
 			}
+
+			$entityType = static::class;
+			self::$instanceCache[$entityType][$this->key] = $this;
+
+			return $result;
 		}
 
 		/**
@@ -151,7 +163,32 @@ namespace Database {
 		}
 
 		/**
-		 * Load one or more ID's into entities
+		 * Queries database for a given entity by the value of its primary key.
+		 * 
+		 * @param int|string $identifier The value of the entity's primary key. 
+		 * @return Entity The loaded entity, empty entity if not exists
+		 */
+		public static function from(int|string $identifier): Entity {
+			$entityType = static::class;
+		
+			if (!isset(self::$instanceCache[$entityType][$identifier])) {
+				$keyField = static::getKeyField();
+				$data = Connection::getInstance()->fetchRow(static::getTableName(), [$keyField => $identifier]);
+		
+				$instance = new static($data);
+		
+				if ($instance->exists()) {
+					self::$instanceCache[$entityType][$identifier] = $instance;
+				}
+			}
+		
+			return self::$instanceCache[$entityType][$identifier] ?? new static();
+		}
+
+		/**
+		 * Loads up one or more entities with given data.
+		 * It is assumed the data to populate with is already fetched elsewhere.
+		 * e.g. by the use of static::search();
 		 *
 		 * @param mixed $rows an array of ID's or a single ID to load
 		 * @param bool $indexByIDs If loading multiple ID's set this to true, to index the resulting array by entity IDs
@@ -194,10 +231,10 @@ namespace Database {
 		 * @param mixed $value The value that $field is to be matched against
 		 * @return Entity
 		 */
-		public static function from(string $field, mixed $value): Entity {
-			$row = Connection::getInstance()->fetchRow(static::getTableName(), [$field => $value]);
-			return new static($row);
-		}
+		//public static function from(string $field, mixed $value): Entity {
+		//	$row = Connection::getInstance()->fetchRow(static::getTableName(), [$field => $value]);
+		//	return new static($row);
+		//}
 
 		/**
 		 * Creates a new instance of any given entity
