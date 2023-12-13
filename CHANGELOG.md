@@ -1,4 +1,10 @@
 # Changelog #  
+v5.0.0
+- This update is backwards incompatible with previous methhods of Entity::from();  
+- Coding standards update.  
+- Return types update.  
+- New instance cache.  
+
 v4.1.0
 - Added new Entity::from(string, mixed) method.  
 - Updating inline docblocks.  
