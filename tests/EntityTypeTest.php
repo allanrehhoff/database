@@ -33,25 +33,6 @@
 		}
 
 		/**
-		 * Test we can load an EntityType using the ::from(); method
-		 */
-		public function testLoadingWithFromMethod() {
-			$entity = new Database\EntityType();
-			$entity->set([
-				"datetime_col" => date("Y-m-d H:i:s"),
-				"varchar_col" => "Yoda the great",
-				"text_col" => "Fear is the path to the dark side."
-			]);
-			$entity->save();
-
-			$loadedEntity = Database\EntityType::from($entity->id());
-
-			$this->assertInstanceOf(Database\EntityType::class, $loadedEntity);
-			$this->assertTrue($loadedEntity->exists());
-			$this->assertEquals("Fear is the path to the dark side.", $loadedEntity->get("text_col"));
-		}
-
-		/**
 		* Test we're able to set and insert data, and able to read insert_id independent of EntityType
 		*/
 		public function testGetLastInsertIdAfterInsertEntityType() {
@@ -114,10 +95,29 @@
 		}
 
 		/**
+		 * Test we can load an EntityType using the ::from(); method
+		 */
+		public function testFromMethod() {
+			$entity = new Database\EntityType();
+			$entity->set([
+				"datetime_col" => date("Y-m-d H:i:s"),
+				"varchar_col" => "Yoda the great",
+				"text_col" => "Fear is the path to the dark side."
+			]);
+			$insert_id = $entity->save();
+
+			$loadedEntity = Database\EntityType::from($insert_id);
+
+			$this->assertInstanceOf(Database\EntityType::class, $loadedEntity);
+			$this->assertTrue($loadedEntity->exists());
+			$this->assertEquals("Fear is the path to the dark side.", $loadedEntity->get("text_col"));
+		}
+
+		/**
 		* Inserts an entity and make sure it can be deleted.
 		* Hopefully this should only delete a single row
 		*/
-		public function testInsertAndDelete() {
+		public function testFindAndDelete() {
 			$insert = new Database\EntityType();
 			$insert->set([
 				"varchar_col" => "Lorem ipsum dolor sit amet",
@@ -126,9 +126,8 @@
 			])->save();
 			$insert_id = $insert->id();
 
-			$loaded = Database\EntityType::from($insert_id);
+			$loaded = Database\EntityType::find($insert->getPrimaryKey(), $insert_id);
 			$this->assertNotEmpty($loaded);
-
 			$this->assertEquals(1, $loaded->delete());
 		}
 
