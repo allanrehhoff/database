@@ -235,7 +235,14 @@ namespace Database {
 
 						// (:val0, :val1, :val2)
 						$in = "(:".implode(", :", array_keys($tmparr)).')';
-						$sql = str_replace(":".$column, $in, $sql);
+
+						// Catches and replace only the whole part of a named parameter,
+						// determined by a whitespace or end of line.
+						// This prevents parameters from being wrongfully replaced,
+						// where one parameter overlaps with the string of another
+						// e.g. ':pizza¨' would replace part of ':pizzaria'
+						$sql = preg_replace("/:" . preg_quote($column, '/') . "(\s|$)/", $in . '$1', $sql);
+
 						unset($this->filters[$column]);
 					}
 				}

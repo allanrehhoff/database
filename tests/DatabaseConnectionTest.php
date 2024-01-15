@@ -317,5 +317,10 @@
 			$queryInterpolated = self::$db->debugQuery("SELECT foo FROM bar WHERE baz IN :arr", ["arr" => ["this", "or", "that"]]);
 			$this->assertEquals($correctQuery, $queryInterpolated);
 		}
+	
+		public function testParametersCannotOverlap() {
+			$correctQuery = "SELECT * FROM pizzas WHERE topping IN ('ham', 'ananas', 'cheese') AND pizzaria = 'The corner'";
+			$queryInterpolated = self::$db->debugQuery("SELECT * FROM pizzas WHERE topping IN :pizza AND pizzaria = :pizzaria", ["pizza" => ["ham", "ananas", "cheese"], "pizzaria" => "The corner"]);
+			$this->assertEquals($correctQuery, $queryInterpolated);
+		}
 	}
-?>
