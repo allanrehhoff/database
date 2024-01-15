@@ -221,30 +221,27 @@ namespace Database {
 		 */
 		public function prepare(string $sql, array $driverOptions = []): Statement|false {
 			// if a filter value is an array we'll create an IN syntax
-			if(!empty($this->filters)) {
-				foreach($this->filters as $column => $filter) {
-					if(is_array($filter) === true) {
-						$tmparr = [];
+			foreach($this->filters ?? [] as $column => $filter) {
+				if(gettype($filter) === "array") {
+					$tmparr = [];
 
-						foreach($filter as $item) {
-							$key = "val".$this->arrayINCounter;
-							$tmparr[$key]  = $item;
-							$this->filters[$key] = $item;
-							$this->arrayINCounter++;
-						}
-
-						// (:val0, :val1, :val2)
-						$in = "(:".implode(", :", array_keys($tmparr)).')';
-
-						// Catches and replace only the whole part of a named parameter,
-						// determined by a whitespace or end of line.
-						// This prevents parameters from being wrongfully replaced,
-						// where one parameter overlaps with the string of another
-						// e.g. ':pizza¨' would replace part of ':pizzaria'
-						$sql = preg_replace("/:" . preg_quote($column, '/') . "(\s|$)/", $in . '$1', $sql);
-
-						unset($this->filters[$column]);
+					foreach($filter as $item) {
+						$key = "val" . $this->arrayINCounter++;
+						$tmparr[$key]  = $item;
+						$this->filters[$key] = $item;
 					}
+
+					// (:val0, :val1, :val2)
+					$in = "(:".implode(", :", array_keys($tmparr)).')';
+
+					// Catches and replace only the whole part of a named parameter,
+					// determined by a whitespace or end of line.
+					// This prevents parameters from being wrongfully replaced,
+					// where one parameter overlaps with the string of another
+					// e.g. ':pizza¨' would replace part of ':pizzaria'
+					$sql = preg_replace("/:" . preg_quote($column, '/') . "(\s|$)/", $in . '$1', $sql);
+
+					unset($this->filters[$column]);
 				}
 			}
 
@@ -253,24 +250,19 @@ namespace Database {
 			// Simply passing $this->filters to PDO::execute();
 			// will treat all parameter values as PDO::PARAM_STR
 			// resulting in errors when passing int or NULL as values
-			if(!empty($this->filters)) {
-				foreach($this->filters as $param => $value) {
-					$type = gettype($value);
+			foreach($this->filters ?? [] as $param => $value) {
+				$type = gettype($value);
 
-					if($type == "NULL") {
-						$statement->bindValue($param, $value, \PDO::PARAM_NULL);
-					} else if($type == "boolean") {
-						$statement->bindValue($param, $value, \PDO::PARAM_STR);
-					} else if($type == "integer") {
-						$statement->bindValue($param, $value, \PDO::PARAM_INT);
-					} else if($type == "double") {
-						$statement->bindValue($param, $value, \PDO::PARAM_STR);
-					} else if($type == "string") {
-						$statement->bindValue($param, $value, \PDO::PARAM_STR);
-					} else {
-						$statement->bindValue($param, $value);
-					}
-				}
+				$paramType = match ($type) {
+					"NULL" => \PDO::PARAM_NULL,
+					"boolean" => \PDO::PARAM_BOOL,
+					"integer" => \PDO::PARAM_INT,
+					"double" => \PDO::PARAM_STR,
+					"string" => \PDO::PARAM_STR,
+					default => \PDO::PARAM_STR,
+				};
+
+				$statement->bindValue($param, $value, $paramType);
 			}
 
 			return $statement;
