@@ -1,4 +1,9 @@
 # Changelog #  
+v5.1.1
+- Maintenance update.  
+- PHP8.3 compatibility.  
+- Minor performance optimizations.  
+
 v5.0.0
 - This update is backwards incompatible with previous methhods of Entity::from();  
 - Coding standards update.  
