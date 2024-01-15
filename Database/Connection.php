@@ -56,7 +56,7 @@ namespace Database {
 		 */
 		public function __construct(string $hostname, string $username, string $password, string $database) {
 			if (extension_loaded("pdo") === false) {
-				throw new \Exception("PDO does not appear to be enabled for this server.");
+				throw new \RuntimeException("PDO does not appear to be enabled for this server.");
 			}
 
 			$this->connect($hostname, $username, $password, $database);
@@ -191,7 +191,7 @@ namespace Database {
 			if($this->transactionStarted === true) {
 				return $this->dbh->commit();
 			} else {
-				throw new \PDOException("Attempted to commit when not in transaction, or transaction failed to start.");
+				throw new \RuntimeException("Attempted to commit when not in transaction, or transaction failed to start.");
 			}
 		}
 
@@ -206,7 +206,7 @@ namespace Database {
 			if($this->transactionStarted === true) {
 				return $this->dbh->rollBack();
 			} else {
-				throw new \PDOException("Attempted rollback when not in transaction.");
+				throw new \RuntimeException("Attempted rollback when not in transaction.");
 			}
 		}
 
@@ -287,9 +287,8 @@ namespace Database {
 				$this->statement->execute();
 				$this->statement->setFetchMode($fetchMode);
 				$this->queryCount++;
-			} catch(\PDOException $exception) {
-				throw new \PDOException($exception->getCode().": ".$exception->getMessage(), (int) $exception->getCode());
 			} finally {
+				$this->filters = [];
 				$this->lastQuery = $sql;
 			}
 
