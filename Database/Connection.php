@@ -183,7 +183,7 @@ namespace Database {
 		/**
 		 * Commits a transaction, returning the database connection to autocommit mode.
 		 *
-		 * @throws \PDOException On failure to commit the query.
+		 * @throws \RuntimeException On failure to commit the query.
 		 * @return boolean
 		 * @since 1.3
 		 */
@@ -198,7 +198,7 @@ namespace Database {
 		/**
 		 * Rolls back the current transaction
 		 *
-		 * @throws \PDOException When attempting a rollback while not in a transaction.
+		 * @throws \RuntimeException When attempting a rollback while not in a transaction.
 		 * @return boolean
 		 * @since 1.3
 		 */
