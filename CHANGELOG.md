@@ -1,4 +1,8 @@
 # Changelog #  
+v5.2.1  
+- Error from v5.2.0: Fix calling static methods in non-static context.  
+- Updatred documentation.  
+
 v5.2.0
 - Primary key is now part of data array.  
 - New method Database\EntityType::insert();  
