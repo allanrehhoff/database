@@ -115,15 +115,14 @@ namespace Database {
 				Connection::getInstance()->upsert($this->getTableName(), $this->data, $this->getKeyFilter());
 				$result = $this->data;
 			} else {
-				if(empty($this->data)) throw new \BadMethodCallException("Data variable is empty");
-				$this->key = Connection::getInstance()->insert($this->getTableName(), $this->data);
-				$result = $this->key;
+				$this->data[$this->getPrimaryKey()] = Connection::getInstance()->insert($this->getTableName(), $this->data);
+				$result = $this->data[$this->getPrimaryKey()];
 			}
 
 			$entityType = static::class;
-			self::$instanceCache[$entityType][$this->key] = $this;
+			self::$instanceCache[$entityType][$this->id()] = $this;
 
-			return $result;
+			return $this;
 		}
 
 		/**
@@ -204,6 +203,16 @@ namespace Database {
 		}
 
 		/**
+		 * Helper method to quickly register a new entity
+		 * @param null|array|object $data Data to insert
+		 * @return static
+		 */
+		public static function insert(null|array|object $data, null|array $allowedFields = null): static {
+			$iEntity = new static($data, $allowedFields);
+			return $iEntity->save();
+		}
+
+		/**
 		 * Update or insert row
 		 * 
 		 * @return Statement
@@ -247,13 +256,6 @@ namespace Database {
 				// This also helps against empty strings telling exists(); to return true
 				foreach($data as $key => $value) {
 					$data[$key] = $value === '' ? null : $value;
-				}
-
-				$keyField = static::getPrimaryKey();
-
-				if(isset($data[$keyField])) {
-					$this->key = $data[$keyField];
-					unset($data[$keyField]);
 				}
 
 				if($allowedFields != null) {
@@ -323,7 +325,7 @@ namespace Database {
 		 * @return array A filter array
 		 */
 		public function getKeyFilter(): array {
-			return [static::getPrimaryKey() => $this->key];
+			return [static::getPrimaryKey() => $this->data[$this->getPrimaryKey()]];
 		}
 
 		/**
@@ -332,7 +334,8 @@ namespace Database {
 		 * @return int|string the key value
 		 */
 		public function id(): int|string {
-			return is_numeric($this->key) ? (int)$this->key : htmlspecialchars($this->key, ENT_QUOTES, "UTF-8");;
+			$identifier = $this->data[$this->getPrimaryKey()];
+			return is_numeric($identifier) ? (int)$identifier : htmlspecialchars($identifier, ENT_QUOTES, "UTF-8");;
 		}
 
 		/**
@@ -341,7 +344,7 @@ namespace Database {
 		 * @return bool
 		 */
 		public function exists(): bool {
-			return $this->key !== null;
+			return $this->data[$this->getPrimaryKey()] ?? null !== null;
 		}
 
 		/**
