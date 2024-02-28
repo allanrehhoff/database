@@ -31,12 +31,14 @@ This will return a custom statement class of \Database\Statement, which also ext
 Simple queries with a return value will be fetched as objects, The second argument should be an array of key-value pairs.
 The last argument to methods, insert(), update(), upsert() and delete() is an array of column => value pairs, which will become the WHERE ... AND clauses in the query.  
 
-The following queries:  
+The following query  
 
 ```php
 <?php
 	\Database\Connection::getInstance()->select("animals");
-
+```
+and
+```
 <?php
 	\Database\Connection::getInstance()->select("animals", ["name" => "Asian Rhino"]]);
 ```
