@@ -4,38 +4,41 @@
 A library for querying your database in an easy-to-maintain objected oriented manner.  
 It features a few classes to speed up CMS / MVC / API and general CRUD development, and abstracts away your database queries.  
  
+This documentation assumes you have basic knowledge of PDO. 
+  
 ## Installing ##
-
+**Method 1:**
 Install manually: ```<?php require "autoload.php"; ?>```
 
-Likely will work with standard autoloaders, if you simply copy the **Database/** directory from any recent release.  
+**Method 2: (recommended)**
+Likely will work with standard autoloaders.
+Copy the **Database/** directory from any recent release into your project. `cp -r Database path/to/project/libs/`  
 
-## Database queries ##
-This section assumes you have basic knowledge of PDO.  
-(I haven't yet had time to properly test this documentation, as though it may appear outdated, use at own risk.)  
-The \Database\Connection(); class wraps around PHP's PDO, so you are able to call all of the built-in PDO functions on the instantiated object as you normally would.  
+### Simple query 
+The `\Database\Connection` class wraps around PHP's PDO, so you are able to call all of the built-in PDO functions on the instantiated object as you normally would.  
 With the exception of the \Database\Connection::query(); method, this has been overloaded to a more convenient way and usage, such that it supports all the below methods.  
-
-1. **\Database\Connection::getInstance()->query()**  
 
 If all you want to do, is a simple parameterized query, this line is the one you're looking for.  
 This will return a custom statement class of \Database\Statement, which also extends the default PDOStatement class.  
 
 ```php
-<?php \Database\Connection::getInstance()->query("UPDATE animals SET `extinct` = :value WHERE name = :name", ["value" => true, "name" => "Asian Rhino"]); ?>
-```   
+<?php
+	\Database\Connection::getInstance()->query("UPDATE animals SET `extinct` = :value WHERE name = :name", ["value" => true, "name" => "Asian Rhino"]);
+```
 
-2. **\Database\Connection::getInstance()->select()**  
+### Selects
 
 Simple queries with a return value will be fetched as objects, The second argument should be an array of key-value pairs.
-Second argument for methods, insert(), update() and delete() is always the WHERE clause.  
+The last argument to methods, insert(), update(), upsert() and delete() is an array of column => value pairs, which will become the WHERE ... AND clauses in the query.  
 
 The following queries:  
 
 ```php
-<?php \Database\Connection::getInstance()->select("animals"); ?>
+<?php
+	\Database\Connection::getInstance()->select("animals");
 
-<?php \Database\Connection::getInstance()->select("animals", ["name" => "Asian Rhino"]]); ?>
+<?php
+	\Database\Connection::getInstance()->select("animals", ["name" => "Asian Rhino"]]);
 ```
 
 Will both return a `Database\Collection` of objects, if the given criterias matched any rows, otherwise the resultset is empty.
@@ -43,36 +46,58 @@ Will both return a `Database\Collection` of objects, if the given criterias matc
 This method also supports IN-like requests.
 
 ```php
-<?php \Database\Connection::getInstance()->select("animals", ["name" => ["Asian Rhino", "Platypus"]]); ?>
-```
-  
-```php
-<?php \Database\Connection::getInstance()->update("animals", ["extinct" => true], ["name" => "Asian Rhino"]); ?>
+<?php
+	\Database\Connection::getInstance()->select("animals", ["name" => ["Asian Rhino", "Platypus"]]);
 ```
 
-3. **\Database\Connection::getInstance()->update()**  
-```php
-<?php \Database\Connection::getInstance()->update("animals", ["extinct" => false], ["name" => "Asian Rhino"]]); ?>
-```
+### Inserts
+To insert a single row into a table.  
 
-4. **\Database\Connection::getInstance()->delete()**  
-```php
-<?php \Database\Connection::getInstance()->delete("animals", ["extinct" => true]); ?>
-```
-
-5. **\Database\Connection::getInstance()->insert()**  
-```php
-<?php \Database\Connection::getInstance()->insert("animals", ["name" => "Asian Rhino", "extinct" => false]]); ?>
-```
-
-6. **\Database\Connection::getInstance()->insertMultiple()**  
 ```php
 <?php
-	\Database\Connection::getInstance()->update("animals",
+	\Database\Connection::getInstance()->insert("animals", ["name" => "Asian Rhino", "extinct" => false]]);
+```
+
+Multiple rows can be inserted using a single query.
+
+```php
+<?php
+	\Database\Connection::getInstance()->insertMultiple("animals",
 		["name" => "Asian Rhino", "extinct" => true],
 		["name" => "Platypus", "extinct" => false]
 	]);
-?>
+```
+
+## Upserts
+Upserting can be reffered to as the technique of "isnert or update if exists" without altering the logic by the caller.  
+This will attempt to insert the row data with a primary key value of 64, otherwise update if the primary key exists with that value.  
+
+```php
+<?php
+	\Database\Connection::getInstance()->upsert("animals", ["animalID" => 64, "name" => "Asian Rhino", "extinct" => true]);
+```
+
+### Updates
+Argument 1: table name  
+Argument 2: data to update  
+Argument 3: Criteria  
+
+```php
+<?php
+	\Database\Connection::getInstance()->update("animals", ["extinct" => false], ["name" => "Asian Rhino"]]);
+```
+
+### Deletes
+Delete rows matching criteria.  
+```php
+<?php
+	\Database\Connection::getInstance()->delete("animals", ["extinct" => true]);
+```
+
+Delete **all** rows.  
+```php
+<?php
+	\Database\Connection::getInstance()->delete("animals");
 ```
 
 ## Database entities ##
@@ -93,30 +118,92 @@ The data object will be saved as a new row if the primary_key key parameter was 
 ```php
 <?php
 	class Animal extends Database\Entity {
-		protected function getKeyField() : string { return "animal_id"; } // The column with your primary key index
-		protected function getTableName() : string { return "animals"; }  // Name of the table to work with
+		/**
+		 * The primary key of the table this entity interacts with
+		 * @return string
+		 */
+		#[\Override]
+		public static function getPrimaryKey(): string { return "test_id"; }
 
 		/**
-		* Develop whatever functions your might need below.
-		*/
-		public function myCustomFunction() {
+		 * The table name this entity interacts with
+		 * @return string
+		 */
+		#[\Override]
+		public static function getTableName(): string { return "test_table"; }
 
-		}
+		// ... Any other methods
 	}
-?> 
 ```
 
-You can now select a row presented as an object by it's primary key.
+Entities can be queried by the value of their primary key with the `from`.
+For performance reasons, loaded antities are cached statically for the remainder of the request.  
+When saved, the instance cache will be updated with the updated instance.  
+
 ```php
 <?php
-if(isset($_GET["animalID"])) {
-	$iAnimal = new Animal($_GET["animalID"]);
-} else {
-	$iAnimal = new Animal();
-}
+$animalID = 64; // Usually this is pulled from the request URI
+$iAnimal = Animal::from($animalID);
 ```
 
-Objects can **not** be loaded with the primary key passed as data.  
+Entities can likewise be queried by other columns than their primary key using `find`  
+Using `find` assumes you only need a single entity matching the given criteria.
+```php
+<?php
+$iAnimal = Animal::find("name", "Asian Rhino");
+```
+
+In cases where multiple rows are expected use the more advanced `search` method instead.
+
+```php
+<?php
+/**
+ * @var Collection<Entity>
+ */
+$animals = Animal::search(["name = :name"], ["name" => "Asian Rhino"]);
+```
+
+... or slightly similar  using a LIKE syntax
+```php
+<?php
+$animals = Animal::search(["name LIKE :name"], ["name" => "Asian%"]);
+```
+
+For multiple criteria pass multiple indices.  
+```php
+<?php
+$animals = Animal::search(
+	[
+		"name LIKE :name",
+		"extinct = :extinct",
+	], [
+		"name" => "Asian%",
+		"extinct" => false
+	]
+);
+```
+
+Sorting can also be done using the `search` method.
+Apart from `query` this is the only method that supports `ORDER BY`.  
+
+```php
+<?php
+$animals = Animal::search(
+	[
+		"name IN :names ORDER BY name DESC"
+	], [
+		"nameS" => ["Asian Rhino", "Indo Chinese"]
+	]
+);
+```
+
+> [!WARNING]  
+> Populating an object with a primary key value **is not** the same as loading the entity using `from`, `find` or `search`.  
+> Once saved data will be overwritten if a primary key by that value already exists.  
+> You must consider appropriate permission checks and validation before engaging with these methods.   
+
+Objects can be populated with the primary key passed as data.  
+Doing so will update the object if it exists in the database, otherwise it'll be created.
 In the following example `$iAnimal` would be treated as a new object upon saving.  
 
 ```php
@@ -129,16 +216,41 @@ $iAnimal->set([
 $iAnimal->save();
 ```
 
+For tables using an auto increment mechanism, the ID will become available after saving.
+
+```php
+<?php
+$iAnimal = new Animal;
+$iAnimal->set([
+	"name" => "Tiger"
+	"extinct" => false
+]);
+$iAnimal->save();
+
+$iAnimal->id(); // Returns last insert id
+```
+
+For Quick insertion the static metthod `insert` can be used
+```php
+<?php
+AnimalLogger::insert([
+	"message" => "Animal was updated"
+	// ...
+])
+```
+
 This will likely trigger a duplicate key error.
 
 ## Collections / Result sets ##
 The **Database\Collection** class is inspired by Laravel collections.  
 
 ```php
-<?php \Database\Connection::getInstance()->select("animals")->getColumn("name"); ?>
+<?php
+	\Database\Connection::getInstance()->select("animals")->getColumn("name");
 ```
 
 Get row (assuming your criteria matches only one row) 
 ```php
-<?php \Database\Connection::getInstance()->select("animals", ["name" => "Asian Rhino"])->getFirst(); ?>
+<?php
+	\Database\Connection::getInstance()->select("animals", ["name" => "Asian Rhino"])->getFirst();
 ```
