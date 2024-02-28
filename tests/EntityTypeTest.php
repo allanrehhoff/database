@@ -83,7 +83,9 @@
 				"text_col" => $textColValue,
 				"datetime_col" => date("Y-m-d h:i:s"),
 			]);
-			$insert_id = $entity->save();
+			$entity->save();
+
+			$insert_id = $entity->id();
 
 			$this->assertEquals($insert_id, self::$db->lastInsertId());
 			$loadedEntity = Database\EntityType::from($insert_id);
@@ -104,7 +106,9 @@
 				"varchar_col" => "Yoda the great",
 				"text_col" => "Fear is the path to the dark side."
 			]);
-			$insert_id = $entity->save();
+			$entity->save();
+
+			$insert_id = $entity->id();
 
 			$loadedEntity = Database\EntityType::from($insert_id);
 
@@ -127,6 +131,7 @@
 			$insert_id = $insert->id();
 
 			$loaded = Database\EntityType::find($insert->getPrimaryKey(), $insert_id);
+
 			$this->assertNotEmpty($loaded);
 			$this->assertEquals(1, $loaded->delete());
 		}
@@ -154,5 +159,28 @@
 			$this->assertInstanceOf(Database\Collection::class, $result);
 
 			$this->assertInstanceOf(Database\EntityType::class, $result->getFirst());
+		}
+
+		public function testInsertWithPrimaryKey() {
+			$entityClass = new class() extends \Database\EntityType {
+				/**
+				 * @return string
+				 */
+				#[\Override]
+				public static function getPrimaryKey(): string { return "unique_id"; }
+
+				/**
+				 * The table name this entity interacts with
+				 * @return string
+				 */
+				#[\Override]
+				public static function getTableName(): string { return "test_table2"; }
+			};
+
+			$iEntityType = $entityClass::insert([
+				"unique_id" => "xxxx-4xxx-xxxx-xxxx-xxxx"
+			]);
+
+			$this->assertEquals("xxxx-4xxx-xxxx-xxxx-xxxx", $iEntityType->id());
 		}
 	}

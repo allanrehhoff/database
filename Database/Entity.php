@@ -113,17 +113,14 @@ namespace Database {
 		public function save(): int|string|static {
 			if($this->exists() === true) {
 				Connection::getInstance()->upsert($this->getTableName(), $this->data, $this->getKeyFilter());
-				$result = $this->data;
 			} else {
-				if(empty($this->data)) throw new \BadMethodCallException("Data variable is empty");
-				$this->key = Connection::getInstance()->insert($this->getTableName(), $this->data);
-				$result = $this->key;
+				$this->data[$this->getPrimaryKey()] = Connection::getInstance()->insert($this->getTableName(), $this->data);
 			}
 
 			$entityType = static::class;
-			self::$instanceCache[$entityType][$this->key] = $this;
+			self::$instanceCache[$entityType][$this->id()] = $this;
 
-			return $result;
+			return $this;
 		}
 
 		/**
@@ -204,6 +201,16 @@ namespace Database {
 		}
 
 		/**
+		 * Helper method to quickly register a new entity
+		 * @param null|array|object $data Data to insert
+		 * @return static
+		 */
+		public static function insert(null|array|object $data, null|array $allowedFields = null): static {
+			$iEntity = new static($data, $allowedFields);
+			return $iEntity->save();
+		}
+
+		/**
 		 * Update or insert row
 		 * 
 		 * @return Statement
@@ -243,20 +250,13 @@ namespace Database {
 				$data = (array) $data;
 
 				// Find empty strings in dataset and convert to null instead.
-				// JSON fields doesn't allow empty strings to be stored.
+				// fx. JSON fields doesn't allow empty strings to be stored.
 				// This also helps against empty strings telling exists(); to return true
 				foreach($data as $key => $value) {
-					$data[$key] = $value === '' ? null : $value;
+					if($value === '') $data[$key] = null;
 				}
 
-				$keyField = static::getPrimaryKey();
-
-				if(isset($data[$keyField])) {
-					$this->key = $data[$keyField];
-					unset($data[$keyField]);
-				}
-
-				if($allowedFields != null) {
+				if($allowedFields !== null) {
 					$data = array_intersect_key($data, array_flip($allowedFields));
 				}
 
@@ -288,20 +288,6 @@ namespace Database {
 		}
 
 		/**
-		 * Make a given value safe for insertion, could prevent future XSS injections
-		 *
-		 * @param string $key Key of the data value to retrieve
-		 * @return null|string A html friendly string
-		 */
-		public function safe(string $key): ?string {
-			$data = $this->get($key);
-
-			if($data === null) return null;
-
-			return htmlspecialchars($data, ENT_QUOTES, "UTF-8");
-		}
-
-		/**
 		 * Get and shift a value off the data array
 		 * 
 		 * @param string $key key name of the value to retrieve
@@ -318,12 +304,27 @@ namespace Database {
 		}
 
 		/**
-		 * Gets an array suitable for WHERE clauses in SQL statements
-		 *
-		 * @return array A filter array
+		 * Escape data for output
+		 * 
+		 * @param $data The data string to escape
+		 * @return string The Escaped string
 		 */
-		public function getKeyFilter(): array {
-			return [static::getPrimaryKey() => $this->key];
+		public function escape(string $data): string {
+			return htmlspecialchars($data, ENT_QUOTES, "UTF-8");
+		}
+
+		/**
+		 * Make a given value safe for insertion, could prevent future XSS injections
+		 *
+		 * @param string $key Key of the data value to retrieve
+		 * @return null|string A html friendly string
+		 */
+		public function safe(string $key): ?string {
+			$data = $this->get($key);
+
+			if($data === null) return null;
+
+			return $this->escape($data);
 		}
 
 		/**
@@ -332,7 +333,17 @@ namespace Database {
 		 * @return int|string the key value
 		 */
 		public function id(): int|string {
-			return is_numeric($this->key) ? (int)$this->key : htmlspecialchars($this->key, ENT_QUOTES, "UTF-8");;
+			$identifier = $this->data[$this->getPrimaryKey()];
+			return is_numeric($identifier) ? (int)$identifier : $this->escape($identifier);
+		}
+
+		/**
+		 * Gets an array suitable for WHERE clauses in SQL statements
+		 *
+		 * @return array A filter array
+		 */
+		public function getKeyFilter(): array {
+			return [static::getPrimaryKey() => $this->data[$this->getPrimaryKey()]];
 		}
 
 		/**
@@ -341,7 +352,7 @@ namespace Database {
 		 * @return bool
 		 */
 		public function exists(): bool {
-			return $this->key !== null;
+			return $this->data[$this->getPrimaryKey()] ?? null !== null;
 		}
 
 		/**

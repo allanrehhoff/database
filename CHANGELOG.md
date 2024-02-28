@@ -1,4 +1,8 @@
 # Changelog #  
+v5.2.0
+- Primary key is now part of data array.  
+- New method Database\EntityType::insert();  
+
 v5.1.1
 - Maintenance update.  
 - PHP8.3 compatibility.  
