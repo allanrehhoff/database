@@ -200,7 +200,7 @@ $animals = Animal::search(
 ```
 
 > [!WARNING]  
-> Populating an object with a primary key value **is not** the same as loading the entity using `from`, `find` or `search`.  
+> Populating an object with a primary key **is not** the same as loading the entity using `from`, `find` or `search`.  
 > Once saved data will be overwritten if a primary key by that value already exists.  
 > You must consider appropriate permission checks and validation before engaging with these methods.   
 
