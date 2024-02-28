@@ -114,7 +114,7 @@ namespace Database {
 			if($this->exists() === true) {
 				Connection::getInstance()->upsert($this->getTableName(), $this->data, $this->getKeyFilter());
 			} else {
-				$this->data[$this->getPrimaryKey()] = Connection::getInstance()->insert($this->getTableName(), $this->data);
+				$this->data[static::getPrimaryKey()] = Connection::getInstance()->insert($this->getTableName(), $this->data);
 			}
 
 			$entityType = static::class;
@@ -333,7 +333,7 @@ namespace Database {
 		 * @return int|string the key value
 		 */
 		public function id(): int|string {
-			$identifier = $this->data[$this->getPrimaryKey()];
+			$identifier = $this->data[static::getPrimaryKey()];
 			return is_numeric($identifier) ? (int)$identifier : $this->escape($identifier);
 		}
 
@@ -343,7 +343,7 @@ namespace Database {
 		 * @return array A filter array
 		 */
 		public function getKeyFilter(): array {
-			return [static::getPrimaryKey() => $this->data[$this->getPrimaryKey()]];
+			return [static::getPrimaryKey() => $this->data[static::getPrimaryKey()]];
 		}
 
 		/**
@@ -352,7 +352,7 @@ namespace Database {
 		 * @return bool
 		 */
 		public function exists(): bool {
-			return $this->data[$this->getPrimaryKey()] ?? null !== null;
+			return $this->data[static::getPrimaryKey()] ?? null !== null;
 		}
 
 		/**
