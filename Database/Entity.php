@@ -211,15 +211,6 @@ namespace Database {
 		}
 
 		/**
-		 * Update or insert row
-		 * 
-		 * @return Statement
-		 */
-		public function upsert(): Statement {
-			return Connection::getInstance()->upsert($this->getTableName(), $this->data);
-		}
-
-		/**
 		 * Permanently delete a given entity row
 		 *
 		 * @return int Number of rows affected
