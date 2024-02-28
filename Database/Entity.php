@@ -112,7 +112,7 @@ namespace Database {
 		 */
 		public function save(): int|string|static {
 			if($this->exists() === true) {
-				Connection::getInstance()->update($this->getTableName(), $this->data, $this->getKeyFilter());
+				Connection::getInstance()->upsert($this->getTableName(), $this->data, $this->getKeyFilter());
 				$result = $this->data;
 			} else {
 				if(empty($this->data)) throw new \BadMethodCallException("Data variable is empty");
@@ -124,38 +124,6 @@ namespace Database {
 			self::$instanceCache[$entityType][$this->key] = $this;
 
 			return $result;
-		}
-
-		/**
-		 * Update or insert row
-		 * 
-		 * @return Statement
-		 */
-		public function upsert(): Statement {
-			return Connection::getInstance()->upsert($this->getTableName(), $this->data);
-		}
-
-		/**
-		 * Permanently delete a given entity row
-		 *
-		 * @return int Number of rows affected
-		 */
-		public function delete(): int {
-			return Connection::getInstance()->delete($this->getTableName(), $this->getKeyFilter());
-		}
-
-		/**
-		 * Make a given value safe for insertion, could prevent future XSS injections
-		 *
-		 * @param string $key Key of the data value to retrieve
-		 * @return null|string A html friendly string
-		 */
-		public function safe(string $key): ?string {
-			$data = $this->get($key);
-
-			if($data === null) return null;
-
-			return htmlspecialchars($data, ENT_QUOTES, "UTF-8");
 		}
 
 		/**
@@ -236,6 +204,24 @@ namespace Database {
 		}
 
 		/**
+		 * Update or insert row
+		 * 
+		 * @return Statement
+		 */
+		public function upsert(): Statement {
+			return Connection::getInstance()->upsert($this->getTableName(), $this->data);
+		}
+
+		/**
+		 * Permanently delete a given entity row
+		 *
+		 * @return int Number of rows affected
+		 */
+		public function delete(): int {
+			return Connection::getInstance()->delete($this->getTableName(), $this->getKeyFilter());
+		}
+
+		/**
 		 * Creates a new instance of any given entity
 		 * @return Entity
 		 */
@@ -299,6 +285,20 @@ namespace Database {
 		 */
 		public function get(string $key): mixed {
 			return $this->data[$key] ?? null;
+		}
+
+		/**
+		 * Make a given value safe for insertion, could prevent future XSS injections
+		 *
+		 * @param string $key Key of the data value to retrieve
+		 * @return null|string A html friendly string
+		 */
+		public function safe(string $key): ?string {
+			$data = $this->get($key);
+
+			if($data === null) return null;
+
+			return htmlspecialchars($data, ENT_QUOTES, "UTF-8");
 		}
 
 		/**
