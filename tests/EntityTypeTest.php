@@ -183,4 +183,20 @@
 
 			$this->assertEquals("xxxx-4xxx-xxxx-xxxx-xxxx", $iEntityType->id());
 		}
+
+		public function testDelete() {
+			$iEntityType = new Database\EntityType();
+			$iEntityType->set([
+				"varchar_col" => "test",
+				"text_col" => "some other value",
+				"datetime_col" => date("Y-m-d h:i:s"),
+			]);
+			$iEntityType->save();
+
+			$this->assertTrue($iEntityType->exists());
+
+			$iEntityType->delete();
+
+			$this->assertFalse($iEntityType->exists());
+		}
 	}
