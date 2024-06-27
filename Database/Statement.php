@@ -63,6 +63,7 @@ class Statement extends \PDOStatement {
 	 * Gets result set collection
 	 *
 	 * @return Collection
+	 * @since 5.3.0
 	 */
 	public function getCollection(): Collection {
 		return new Collection($this->fetchAll());
@@ -72,6 +73,7 @@ class Statement extends \PDOStatement {
 	 * Gets result set iterator, alias of Statement::getCollection
 	 *
 	 * @return Collection
+	 * @since 5.3.0
 	 */
 	public function getIterator(): Collection {
 		return $this->getCollection();
