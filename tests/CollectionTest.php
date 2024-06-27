@@ -61,4 +61,15 @@
 
 			$this->assertEquals($res->getColumn("movie_name")->getFirst(), $res->getFirst()->movie_name);
 		}
+
+		/**
+		 * Test the getIterator method
+		 *
+		 * @return void
+		 */
+		public function testIterator() {
+			$res = self::$db->query("SELECT * FROM movies")->getIterator();
+
+			$this->assertInstanceOf(Database\Collection::class, $res);
+		}
 	}

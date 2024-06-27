@@ -58,4 +58,22 @@ class Statement extends \PDOStatement {
 		$result = parent::fetchColumn($column);
 		return $result !== false ? $result : null;
 	}
+
+	/**
+	 * Gets result set collection
+	 *
+	 * @return Collection
+	 */
+	public function getCollection(): Collection {
+		return new Collection($this->fetchAll());
+	}
+
+	/**
+	 * Gets result set iterator, alias of Statement::getCollection
+	 *
+	 * @return Collection
+	 */
+	public function getIterator(): Collection {
+		return $this->getCollection();
+	}
 }
