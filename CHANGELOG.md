@@ -1,4 +1,8 @@
 # Changelog #  
+v5.3.0
+- New methods: Statement::getCollection() and Statement::getIterator()
+- Added optional 'clause' parameter to search methods.
+
 v5.2.1  
 - Error from v5.2.0: Fix calling static methods in non-static context.  
 - Updatred documentation.  
