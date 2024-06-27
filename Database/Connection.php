@@ -368,11 +368,12 @@ class Connection {
 	 * @param string $table Name of the table to search
 	 * @param array $searches Sets of expressions to match. e.g. 'filepath LIKE :filepath'
 	 * @param null|array $criteria Criteria variables for the search sets
+	 * @param string $clause The clause to put between each criteria, default AND
 	 * @return Collection
 	 * @since 3.1.3
 	 */
-	public function search(string $table, array $searches = [], ?array $criteria = null): Collection {
-		$sql = "SELECT * FROM " . $this->safeTable($table) . " WHERE " . implode(" AND ", $searches);
+	public function search(string $table, array $searches = [], ?array $criteria = null, string $clause = "AND"): Collection {
+		$sql = "SELECT * FROM " . $this->safeTable($table) . " WHERE " . implode(' ' . $clause . ' ', $searches);
 		return new Collection($this->query($sql, $criteria)->fetchAll());
 	}
 

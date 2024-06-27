@@ -243,17 +243,55 @@
 
 		public function testSelectQueryFromWrapperMethod() {
 			self::$db->insert("movies", ["movie_name" => "test", "added" => date("Y-m-d h:i:s")]);
-			$res = self::$db->select("movies");
+			$res = self::$db->select("movies")->all();
 			$this->assertNotEmpty($res);	
 		}
 
 		public function testSelectQueryMethodWithParameters() {
 			self::$db->insert("movies", ["movie_name" => "test", "added" => date("Y-m-d h:i:s")]);
-			$res = self::$db->select("movies", ["movie_name" => "test"]);
+			$res = self::$db->select("movies", ["movie_name" => "test"])->all();
 			$this->assertNotEmpty($res);
 		}
 
-		public function testSelectQueryMethodWithNegatedParameters() {
+		public function testSearchAnd() {
+			self::$db->insert("movies", ["movie_name" => "test_11", "added" => "1111-11-11 11:11:11"]);
+			$res = self::$db->search("movies", [
+				"movie_name = :movie_name",
+				"added = :added"
+			], [
+				"movie_name" => "test_11",
+				"added" => "1111-11-11 11:11:11"
+			])->all();
+
+			$this->assertCount(1, $res);
+		}
+
+		public function testSearchOr() {
+			$data = [
+				[
+					"movie_name" => "Test_22",
+					"added" => date("Y-m-d h:i:s")
+				],
+				[
+					"movie_name" => "Test_33",
+					"added" => date("Y-m-d h:i:s")
+				]
+			];
+
+			self::$db->insertMultiple("movies", $data);
+
+			$res = self::$db->search("movies", [
+				"movie_name = :movie_name2",
+				"movie_name = :movie_name3",
+			], [
+				"movie_name2" => "test_22",
+				"movie_name3" => "test_33"
+			], "OR")->all();
+
+			$this->assertCount(2, $res);
+		}
+
+		public function testSearchQueryMethodWithNegatedParameters() {
 			self::$db->delete("movies");
 
 			$date = date("Y-m-d h:i:s");
