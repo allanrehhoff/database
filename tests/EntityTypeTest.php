@@ -162,6 +162,8 @@
 		}
 
 		public function testInsertWithPrimaryKey() {
+			self::$db->delete("test_table2", ["unique_id" => "xxxx-4xxx-xxxx-xxxx-xxxx"]);
+
 			$entityClass = new class() extends \Database\EntityType {
 				/**
 				 * @return string

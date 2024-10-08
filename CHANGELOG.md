@@ -1,4 +1,7 @@
 # Changelog #  
+v5.4.0
+- Saving entities only updates set data, instead of loaded, to help mitigate race-conditions.  
+
 v5.3.0
 - New methods: Statement::getCollection() and Statement::getIterator()
 - Added optional 'clause' parameter to search methods.
