@@ -181,7 +181,7 @@ abstract class Entity {
 	 * @param array|\stdClass $row Row from database
 	 * @return Collection<Entity>|Entity array of entities if passed an array, otherwise the provided object as an entity
 	 */
-	public static function with(array|\stdClass|Collection $row): Collection|Entity {
+	public static function with(iterable|\stdClass $row): Collection|Entity {
 		if (is_iterable($row)) {
 			$entities = [];
 			foreach ($row as $data) $entities[] = static::with($data);
