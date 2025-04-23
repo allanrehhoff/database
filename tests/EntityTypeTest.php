@@ -62,7 +62,7 @@
 
 			$testData = self::$db->fetchRow("test_table", ["varchar_col" => "somevalue"]);
 
-			$entity = Database\EntityType::load($testData);
+			$entity = Database\EntityType::with($testData);
 			$this->assertInstanceOf(Database\EntityType::class, $entity);
 		}
 
