@@ -401,4 +401,21 @@ abstract class Entity {
 	public function isNew(): bool {
 		return !$this->exists();
 	}
+
+	/**
+	 * Determine if the entity has been modified
+	 *
+	 * @return bool
+	 */
+	public function isModified(): bool {
+		return !empty($this->new);
+	}
+
+	/**
+	 * Check if the primary key is set in either the data or new array
+	 */
+	public function hasPrimaryKeyValue(): bool {
+		$key = static::getPrimaryKey();
+		return isset($this->data[$key]) || isset($this->new[$key]);
+	}
 }
