@@ -1,4 +1,9 @@
 # Changelog #  
+v6.0.0
+- Restructured to allow decorator pattens to handle primary keys.  
+- Removed unused parameters from functions.  
+- Normalized typehints and docblocks.  
+
 v5.4.0
 - Saving entities only updates set data, instead of loaded, to help mitigate race-conditions.  
 
