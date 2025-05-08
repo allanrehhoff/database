@@ -62,7 +62,7 @@
 
 			$testData = self::$db->fetchRow("test_table", ["varchar_col" => "somevalue"]);
 
-			$entity = Database\EntityType::with($testData);
+			$entity = Database\EntityType::hydrate($testData);
 			$this->assertInstanceOf(Database\EntityType::class, $entity);
 		}
 
@@ -179,11 +179,63 @@
 				public static function getTableName(): string { return "test_table2"; }
 			};
 
-			$iEntityType = $entityClass::insert([
-				"unique_id" => "xxxx-4xxx-xxxx-xxxx-xxxx"
-			]);
+			$iEntityType = $entityClass::new()->set(["unique_id" => "xxxx-4xxx-xxxx-xxxx-xxxx"])->save();
 
 			$this->assertEquals("xxxx-4xxx-xxxx-xxxx-xxxx", $iEntityType->id());
+		}
+
+		public function testAutoGeneratingUuidV4() {
+			self::$db->delete("test_table2", ["unique_id" => "xxxx-4xxx-xxxx-xxxx-xxxx"]);
+
+			$entityClass = new class() extends \Database\EntityType {
+				use \Database\PrimaryKey\UuidV4;
+
+				/**
+				 * @return string
+				 */
+				#[\Override]
+				public static function getPrimaryKey(): string { return "unique_id"; }
+
+				/**
+				 * The table name this entity interacts with
+				 * @return string
+				 */
+				#[\Override]
+				public static function getTableName(): string { return "test_table2"; }
+			};
+
+			$iEntityType = $entityClass::new()->save();
+			$uuid = $iEntityType->id();
+
+			$this->assertNotEmpty($uuid, "UUID should not be empty after save()");
+			$this->assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $uuid, "UUID should match the version 4 format");
+		}
+
+		public function testAutoGeneratingUuidV7() {
+			self::$db->delete("test_table2", ["unique_id" => "xxxx-4xxx-xxxx-xxxx-xxxx"]);
+
+			$entityClass = new class() extends \Database\EntityType {
+				use \Database\PrimaryKey\UuidV7;
+
+				/**
+				 * @return string
+				 */
+				#[\Override]
+				public static function getPrimaryKey(): string { return "unique_id"; }
+
+				/**
+				 * The table name this entity interacts with
+				 * @return string
+				 */
+				#[\Override]
+				public static function getTableName(): string { return "test_table2"; }
+			};
+
+			$iEntityType = $entityClass::new()->save();
+			$uuid = $iEntityType->id();
+
+			$this->assertNotEmpty($uuid, "UUID should not be empty after save()");
+			$this->assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $uuid, "UUID should match the version 7 format");
 		}
 
 		public function testDelete() {
