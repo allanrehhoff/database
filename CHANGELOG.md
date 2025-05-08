@@ -1,8 +1,13 @@
 # Changelog #  
 v6.0.0
+**This release is backwards incompatible**
+- Support for auto-generating UUIDs.  
 - Restructured to allow decorator pattens to handle primary keys.  
 - Removed unused parameters from functions.  
 - Normalized typehints and docblocks.  
+- Deprecated with(); method, use hydrate(); instead.
+- Added hydrate(); to align naming with other well-known libraries.  
+- $criteria parameter can no longer be null.  
 
 v5.4.0
 - Saving entities only updates set data, instead of loaded, to help mitigate race-conditions.  
