@@ -243,6 +243,57 @@ AnimalLogger::insert([
 
 This will likely trigger a duplicate key error.
 
+## Auto-generating primary keys
+
+By default, entities expect auto-incrementing primary keys.  
+However, if you prefer to use UUIDs as primary keys, you can opt-in by utilizing the provided traits.
+
+To enable UUIDs, include one of `\Database\Primary\UuidV4` or `\Database\Primary\UuidV7` traits in your entity class.  
+This trait will automatically generate a UUID of the specified version for the primary key when a new entity is created.  
+
+When using a trait, the primary key will be generated as a UUID string before the entity is saved to the database. 
+
+To use a general-purpose unique UUIDv4
+
+```php
+<?php
+
+class Animal extends Database\Entity {
+	use \Database\Primary\UuidV4;
+
+	public static function getPrimaryKey(): string {
+		return "animalID";
+	}
+
+	public static function getTableName(): string {
+		return "animals";
+	}
+}
+```
+
+To use a time-based and sortable v7 UUID
+
+> [!WARNING]  
+> **Version 7 UUIDs are not secure**  
+> V7 UUIDs are by design based on timestamps and may leak generation time, which can expose sensitive information about when the UUID was created.
+> Avoid using V7 UUIDs in scenarios where security and privacy are critical. Consider using a more secure UUID version, such as V4, for these use cases.
+
+```php
+<?php
+
+class Animal extends Database\Entity {
+	use \Database\Primary\UuidV7;
+
+	public static function getPrimaryKey(): string {
+		return "animalID";
+	}
+
+	public static function getTableName(): string {
+		return "animals";
+	}
+}
+```
+
 ## Collections / Result sets ##
 The **Database\Collection** class is inspired by Laravel collections.  
 
