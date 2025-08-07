@@ -1,4 +1,18 @@
 # Changelog #  
+
+
+v6.1.0
+- Added JsonSerializable interface to Database\Collection and Database\Entity for native JSON serialization support.
+- Implemented jsonSerialize() method in Collection and Entity to enable JSON encoding of collections and entities.
+- Improved Database\Connection to support multiple named singleton instances via an $alias parameter.
+- Enhanced Entity class:
+- Added support for passing arguments to Entity::new() for flexible instantiation.
+- Improved Entity::find() to handle null results gracefully.
+- Improved Entity::search() to auto-generate search expressions from criteria if none are provided.
+- Added a guard in Entity::delete() to prevent deletion of non-existing entities.
+- Improved typehints and docblocks for clarity and consistency.
+- Minor code style and formatting improvements in UuidV4 and UuidV7 traits.
+
 v6.0.0
 **This release is backwards incompatible**
 - Support for auto-generating UUIDs.  
@@ -136,4 +150,4 @@ v1.1
 - Added interpolateQuery for easier debugging SQL.  
 
 v1.0  
-- Initial release.  
+- Initial release.

@@ -10,7 +10,7 @@ namespace Database;
  * Represents a CRUD'able entity.
  * @phpstan-consistent-constructor
  */
-abstract class Entity {
+abstract class Entity implements \JsonSerializable {
 	/**
 	 * All loaded entities will br stored for the remainder of the request
 	 * @var array $instanceCache
@@ -109,7 +109,7 @@ abstract class Entity {
 		return $this->get($name);
 	}
 
-		/**
+	/**
 	 * Sets the data for the current object.
 	 * If $data is an object, it is converted to an array.
 	 * Empty strings in the dataset are converted to null, 
@@ -175,7 +175,7 @@ abstract class Entity {
 			// Usually happens when using UUIDs and the entity is using a
 			// trait. If a primary key trait is not set, we will fallback 
 			// to the default auto-incrementing behavior.
-			if($this->generatesPrimaryKey() === true) {
+			if ($this->generatesPrimaryKey() === true) {
 				// If the primary key is not provided, generate a new one
 				// Allows entities using traits to set their own primary key value
 				// using the getPrimaryKeyValue() method if not set by the user
@@ -185,7 +185,7 @@ abstract class Entity {
 			} else {
 				// If the primary key is not provided, insert and get the auto-incremented ID
 				// New primary key will be merged into the data array later
-				$insertedId = Connection::getInstance()->insert($this->getTableName(), $this->new);	
+				$insertedId = Connection::getInstance()->insert($this->getTableName(), $this->new);
 				$this->new[$primaryKey] ??= $insertedId;
 			}
 		}
@@ -241,7 +241,7 @@ abstract class Entity {
 	 */
 	public static function find(string $field, int|string $value): static {
 		$row = Connection::getInstance()->fetchRow(static::getTableName(), [$field => $value]);
-		return static::hydrate($row);
+		return static::hydrate($row ?? new \stdClass);
 	}
 
 	/**
@@ -253,15 +253,19 @@ abstract class Entity {
 	 */
 	#[\Deprecated("6.0.0", "Use hydrate() instead")]
 	public static function with(iterable|\stdClass $row): Collection|Entity {
-		return static::hydrate(...func_get_args());
+		return static::hydrate($row);
 	}
 
 	/**
 	 * Created a new instance of entity type with existing data
-	 * @param iterable|\stdClass $row Row from database
+	 * @param null|iterable|\stdClass $row Row from database
 	 * @return Collection<Entity>|Entity Collection of entities if passed an array, otherwise the provided object as an entity
 	 */
-	public static function hydrate(iterable|\stdClass $row): Collection|Entity {
+	public static function hydrate(null|iterable|\stdClass $row): Collection|Entity {
+		if ($row === null) {
+			return new static();
+		}
+
 		if (is_iterable($row)) {
 			$entities = [];
 			foreach ($row as $data) $entities[] = static::hydrate($data);
@@ -281,6 +285,12 @@ abstract class Entity {
 	 * @since 3.3.0
 	 */
 	public static function search(array $searches = [], null|array $criteria = null, string $clause = "AND"): Collection|static {
+		if (empty($searches)) {
+			foreach ($criteria ?? [] as $field => $value) {
+				$searches[] = $field . " = :" . $field;
+			}
+		}
+
 		$rows = Connection::getInstance()->search(static::getTableName(), $searches, $criteria, $clause);
 		return self::hydrate($rows);
 	}
@@ -288,6 +298,7 @@ abstract class Entity {
 	/**
 	 * Helper method to quickly register a new entity
 	 * @param null|array|object $data Data to insert
+	 * @param null|array $allowedFields Name of the columns that are allowed to be set/updated
 	 * @return static
 	 */
 	public static function insert(null|array|object $data, null|array $allowedFields = null): static {
@@ -300,6 +311,7 @@ abstract class Entity {
 	 * @return int Number of rows affected
 	 */
 	public function delete(): int {
+		if (!$this->exists()) return 0; // Prevent deletion of non-existing entity, undefined index error
 		$result = Connection::getInstance()->delete($this->getTableName(), $this->getKeyFilter());
 		$this->data = [];
 		return $result;
@@ -307,10 +319,12 @@ abstract class Entity {
 
 	/**
 	 * Creates a new instance of any given entity
-	 * @return Entity
+	 * @param mixed ...$arguments Arguments to pass to the constructor
+	 * @since 6.0.0
+	 * @return static
 	 */
-	public static function new(): Entity {
-		return new static;
+	public static function new(mixed ...$arguments): static {
+		return new static(...$arguments);
 	}
 
 	/**
@@ -387,7 +401,7 @@ abstract class Entity {
 	/**
 	 * Escape data for output
 	 * 
-	 * @param $data The data string to escape
+	 * @param string $data The data string to escape
 	 * @return string The Escaped string
 	 */
 	public function escape(string $data): string {
@@ -466,9 +480,20 @@ abstract class Entity {
 
 	/**
 	 * Check if the primary key is set in either the data or new array
+	 * @return bool
+	 * @since 6.0.0
 	 */
 	public function hasPrimaryKeyValue(): bool {
 		$key = static::getPrimaryKey();
 		return isset($this->data[$key]) || isset($this->new[$key]);
+	}
+
+	/**
+	 * Support serializing this entity to json object
+	 *
+	 * @return array
+	 */
+	public function jsonSerialize(): array {
+		return $this->items;
 	}
 }
