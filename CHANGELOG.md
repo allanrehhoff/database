@@ -10,6 +10,9 @@ v6.1.0
 - Added a guard in Entity::delete() to prevent deletion of non-existing entities.
 - Improved typehints and docblocks for clarity and consistency.
 - Minor code style and formatting improvements in UuidV4 and UuidV7 traits.
+- Handle empty arrays being passed for IN queries.
+- Support collections for IN queries.
+- Update tests.
 
 v6.0.0
 **This release is backwards incompatible**

@@ -210,6 +210,64 @@
 			$this->assertEquals($false, 1);
 		}
 
+		public function testSelectWithArrayInParameter() {
+			$date = date("Y-m-d h:i:s");
+			
+			$data = [
+				["movie_name" => "Test Movie 1", "added" => $date],
+				["movie_name" => "Test Movie 2", "added" => $date],
+				["movie_name" => "Test Movie 3", "added" => $date]
+			];
+			
+			self::$db->insertMultiple("movies", $data);
+			
+			$movieNames = ["Test Movie 1", "Test Movie 2"];
+			
+			$result = self::$db->select("movies", ["movie_name" => $movieNames])->all();
+			
+			$this->assertCount(2, $result);
+			$this->assertEquals($movieNames[0], $result[0]->movie_name);
+			$this->assertEquals($movieNames[1], $result[1]->movie_name);
+		}
+
+		public function testSelectWithCollectionInParameter() {
+			$date = date("Y-m-d h:i:s");
+			
+			$data = new \Database\Collection([
+				["movie_name" => "Test Movie 4", "added" => $date],
+				["movie_name" => "Test Movie 5", "added" => $date],
+				["movie_name" => "Test Movie 6", "added" => $date]
+			]);
+
+			self::$db->insertMultiple("movies", $data);
+			
+			$movieNames = ["Test Movie 5", "Test Movie 6"];
+			
+			$result = self::$db->select("movies", ["movie_name" => $movieNames])->all();
+			
+			$this->assertCount(2, $result);
+			$this->assertEquals($movieNames[0], $result[0]->movie_name);
+			$this->assertEquals($movieNames[1], $result[1]->movie_name);
+		}
+
+		public function testSelectWithEmptyInParameter() {
+			$date = date("Y-m-d h:i:s");
+			
+			$data = new \Database\Collection([
+				["movie_name" => "Test Movie 4", "added" => $date],
+				["movie_name" => "Test Movie 5", "added" => $date],
+				["movie_name" => "Test Movie 6", "added" => $date]
+			]);
+
+			self::$db->insertMultiple("movies", $data);
+			
+			$movieNames = [];
+			
+			$result = self::$db->select("movies", ["movie_name" => $movieNames])->all();
+			
+			$this->assertCount(0, $result);
+		}
+
 		public function testSingletonCanDoQuery() {
 			$sdb = Database\Connection::getInstance();
 			$this->assertInstanceOf("Database\Connection", $sdb);
