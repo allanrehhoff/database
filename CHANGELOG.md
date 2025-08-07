@@ -1,6 +1,4 @@
 # Changelog #  
-
-
 v6.1.0
 - Added JsonSerializable interface to Database\Collection and Database\Entity for native JSON serialization support.
 - Implemented jsonSerialize() method in Collection and Entity to enable JSON encoding of collections and entities.
